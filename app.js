@@ -57,19 +57,38 @@ async function loadData() {
   renderEscala();
 }
 
-function login(){
-  authenticate();
-  const u=document.getElementById("loginUser").value;
-  const p=document.getElementById("loginPass").value;
+async function login() {
+  const msg = document.getElementById("loginMsg");
+  msg.innerText = "Autenticando...";
 
-  const ok=dataStore.users.find(x=>x.nome===u && x.senha===p);
-  if(ok){
-    isAdmin=true;
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("app").style.display="block";
-  } else {
-    document.getElementById("loginMsg").innerText="Login inválido";
-  }
+  // 1. Inicia o processo de autorização do Google
+  tokenClient.callback = async (resp) => {
+    if (resp.error !== undefined) {
+      msg.innerText = "Erro na autenticação Google";
+      throw (resp);
+    }
+
+    // 2. Aguarda o carregamento real dos dados da planilha
+    await loadData();
+
+    // 3. Captura o que foi digitado no formulário
+    const u = document.getElementById("loginUser").value.trim();
+    const p = document.getElementById("loginPass").value.trim();
+
+    // 4. Procura na aba USERS (Coluna B e C)
+    const usuarioEncontrado = dataStore.users.find(x => x.nome === u && x.senha === p);
+
+    if (usuarioEncontrado) {
+      isAdmin = true;
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    } else {
+      msg.innerText = "Usuário ou Senha não encontrados na planilha.";
+    }
+  };
+
+  // Abre a janelinha do Google que você já viu funcionar
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function fillOficiantes(){
@@ -157,4 +176,5 @@ async function excluir(row){
 
 function gerarPDF(){
   window.print();
+
 }
