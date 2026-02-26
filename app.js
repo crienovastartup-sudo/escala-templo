@@ -61,38 +61,45 @@ async function loadData() {
   renderEscala();
 }
 
-// Altere a função login para esperar o carregamento
 async function login() {
   const msg = document.getElementById("loginMsg");
-  msg.innerText = "Conectando ao Google...";
+  msg.innerText = "Autorizando com Google...";
 
   tokenClient.callback = async (resp) => {
     if (resp.error !== undefined) {
-      msg.innerText = "Erro na autorização.";
+      msg.innerText = "Erro na autorização do Google.";
       throw (resp);
     }
 
-    msg.innerText = "Carregando dados da planilha...";
-    await loadData(); // AGUARDA os dados chegarem
+    // PASSO CRUCIAL: Aguarda o carregamento dos dados da aba USERS
+    msg.innerText = "Sincronizando com a planilha...";
+    const carregou = await loadData(); 
+
+    if (!carregou) {
+      msg.innerText = "Erro ao ler dados. Verifique se a API KEY está no código.";
+      return;
+    }
 
     const u = document.getElementById("loginUser").value.trim();
     const p = document.getElementById("loginPass").value.trim();
+    
+    // Comparação exata com a sua planilha (david / teste123)
+    const usuarioValido = dataStore.users.find(x => 
+      String(x.nome).toLowerCase() === String(u).toLowerCase() && 
+      String(x.senha) === String(p)
+    );
 
-    // Busca exata
-    const ok = dataStore.users.find(x => x.nome === u && x.senha === p);
-
-    if (ok) {
+    if (usuarioValido) {
       isAdmin = true;
       document.getElementById("loginBox").style.display = "none";
       document.getElementById("app").style.display = "block";
     } else {
-      msg.innerText = "Login inválido: Usuário ou Senha não conferem.";
+      msg.innerText = "Usuário ou senha não encontrados na aba USERS.";
     }
   };
 
-  tokenClient.requestAccessToken({ prompt: "consent" });
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
-
 function fillOficiantes(){
   const sel=document.getElementById("oficiante");
   sel.innerHTML="";
@@ -180,5 +187,6 @@ function gerarPDF(){
   window.print();
 
 }
+
 
 
