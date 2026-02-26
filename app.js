@@ -32,6 +32,7 @@ function authenticate() {
   tokenClient.requestAccessToken({ prompt: "consent" });
 }
 
+// Altere a função loadData para garantir a leitura correta das colunas
 async function loadData() {
   const res = await gapi.client.sheets.spreadsheets.values.batchGet({
     spreadsheetId: SPREADSHEET_ID,
@@ -40,55 +41,56 @@ async function loadData() {
 
   const [escalaRaw, ofRaw, usersRaw] = res.result.valueRanges;
 
-  dataStore.escala = (escalaRaw.values || []).map((r,i)=>({
-    row:i+2,setor:r[0],data:r[1],turno:r[2],
-    id_oficiante:r[3],nome:r[4],hora_i:r[5]||"",hora_f:r[6]||""
+  // Mapeia os usuários: r[1] é a Coluna B (NOME), r[2] é a Coluna C (SENHA)
+  dataStore.users = (usersRaw.values || []).map(r => ({
+    nome: r[1] ? r[1].trim() : "", 
+    senha: r[2] ? r[2].trim() : ""
   }));
 
-  dataStore.oficiantes = (ofRaw.values || []).map(r=>({
-    id:r[0],nome:r[1],foto1:r[2],foto2:r[3]
+  // Carrega o restante dos dados
+  dataStore.escala = (escalaRaw.values || []).map((r, i) => ({
+    row: i + 2, setor: r[0], data: r[1], turno: r[2],
+    id_oficiante: r[3], nome: r[4], hora_i: r[5] || "", hora_f: r[6] || ""
   }));
 
-  dataStore.users = (usersRaw.values || []).map(r=>({
-    nome:r[1],senha:r[2]
+  dataStore.oficiantes = (ofRaw.values || []).map(r => ({
+    id: r[0], nome: r[1], foto1: r[2], foto2: r[3]
   }));
 
   fillOficiantes();
   renderEscala();
 }
 
+// Altere a função login para esperar o carregamento
 async function login() {
   const msg = document.getElementById("loginMsg");
-  msg.innerText = "Autenticando...";
+  msg.innerText = "Conectando ao Google...";
 
-  // 1. Inicia o processo de autorização do Google
   tokenClient.callback = async (resp) => {
     if (resp.error !== undefined) {
-      msg.innerText = "Erro na autenticação Google";
+      msg.innerText = "Erro na autorização.";
       throw (resp);
     }
 
-    // 2. Aguarda o carregamento real dos dados da planilha
-    await loadData();
+    msg.innerText = "Carregando dados da planilha...";
+    await loadData(); // AGUARDA os dados chegarem
 
-    // 3. Captura o que foi digitado no formulário
     const u = document.getElementById("loginUser").value.trim();
     const p = document.getElementById("loginPass").value.trim();
 
-    // 4. Procura na aba USERS (Coluna B e C)
-    const usuarioEncontrado = dataStore.users.find(x => x.nome === u && x.senha === p);
+    // Busca exata
+    const ok = dataStore.users.find(x => x.nome === u && x.senha === p);
 
-    if (usuarioEncontrado) {
+    if (ok) {
       isAdmin = true;
       document.getElementById("loginBox").style.display = "none";
       document.getElementById("app").style.display = "block";
     } else {
-      msg.innerText = "Usuário ou Senha não encontrados na planilha.";
+      msg.innerText = "Login inválido: Usuário ou Senha não conferem.";
     }
   };
 
-  // Abre a janelinha do Google que você já viu funcionar
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  tokenClient.requestAccessToken({ prompt: "consent" });
 }
 
 function fillOficiantes(){
@@ -178,3 +180,4 @@ function gerarPDF(){
   window.print();
 
 }
+
