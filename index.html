@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Escala de Oficiantes</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body>
+
+<div id="loginBox">
+  <h2>Login</h2>
+  <input id="loginUser" placeholder="Usuário">
+  <input id="loginPass" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+  <p id="loginMsg"></p>
+</div>
+
+<div id="app" style="display:none;">
+<h1>Escala de Oficiantes</h1>
+
+<div class="form">
+  <h3>Cadastro de Escala</h3>
+  <select id="setor">
+    <option>Batistério</option>
+    <option>Recepção</option>
+    <option>Selamento</option>
+  </select>
+
+  <input type="date" id="data">
+  <select id="turno">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+
+  <select id="oficiante"></select>
+
+  <input type="time" id="horaInicio">
+  <input type="time" id="horaFim">
+
+  <button onclick="salvarEscala()">Salvar</button>
+</div>
+
+<div class="filtros">
+  <select id="filtroSetor" onchange="renderEscala()">
+    <option value="">Todos setores</option>
+    <option>Batistério</option>
+    <option>Recepção</option>
+    <option>Selamento</option>
+  </select>
+
+  <select id="filtroTurno" onchange="renderEscala()">
+    <option value="">Todos turnos</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+</div>
+
+<button onclick="gerarPDF()">Gerar PDF</button>
+
+<table id="tabela">
+<thead>
+<tr>
+<th>Data</th>
+<th>Dia</th>
+<th>Foto</th>
+<th>Nome</th>
+<th>Setor</th>
+<th>Turno</th>
+<th>Hora</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

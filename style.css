@@ -1,0 +1,9 @@
+body { font-family: Arial; background:#f4f4f4; padding:20px; }
+table { width:100%; border-collapse:collapse; margin-top:20px; }
+td,th { border:1px solid #ccc; padding:6px; text-align:center; }
+img { width:40px; border-radius:50%; }
+.Batistério { background:#cce5ff; }
+.Recepção { background:#fff3cd; }
+.Selamento { background:#d4edda; }
+#loginBox { max-width:300px; margin:auto; background:#fff; padding:20px; border-radius:8px; }
+.form, .filtros { margin-top:15px; background:#fff; padding:10px; border-radius:8px; }
