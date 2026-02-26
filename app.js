@@ -2,14 +2,13 @@ const CLIENT_ID = "965874692359-5sqoflo5ipp0dbb09menbs7iqfibeofc.apps.googleuser
 const API_KEY = "AIzaSyBNec6Rf82zw8POHalMgM8YHdFkQlHUTVg";
 const SPREADSHEET_ID = "1XggtZLa9j4d7x1JTm-7RMwnh9OqKQafAFpFut4lLx4U";
 
-// Mantenha suas constantes no topo como já estão
-
 let tokenClient;
 let dataStore = { escala: [], oficiantes: [], users: [] };
 let isAdmin = false;
 
-// 1. Unifique o carregamento para garantir a ordem
+// ÚNICA forma de carregar: aguarda a página estar pronta
 window.onload = function() {
+  // Inicializa o GAPI (para ler a planilha com a API_KEY)
   gapi.load('client', async () => {
     await gapi.client.init({
       apiKey: API_KEY,
@@ -17,37 +16,15 @@ window.onload = function() {
     });
   });
 
+  // Inicializa o Identidade Google (para o login)
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: "https://www.googleapis.com/auth/spreadsheets",
-    callback: "" // Definiremos dentro da função login
+    callback: "" // Deixamos vazio, pois definiremos no clique do botão login
   });
 };
 
-gapiLoaded();
-gisLoaded();
-
-function gapiLoaded() {
-  gapi.load("client", async () => {
-    await gapi.client.init({
-      apiKey: API_KEY,
-      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"]
-    });
-  });
-}
-
-function gisLoaded() {
-  // Apenas inicializa, não faz nada no callback aqui para não dar conflito
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
-    callback: "" // Deixe vazio aqui, vamos usar dentro da função login
-  });
-}
-
-function authenticate() {
-  tokenClient.requestAccessToken({ prompt: "consent" });
-}
+// Remova as chamadas gapiLoaded() e gisLoaded() soltas que estavam aqui.
 
 // Altere a função loadData para garantir a leitura correta das colunas
 async function loadData() {
@@ -203,6 +180,7 @@ function gerarPDF(){
   window.print();
 
 }
+
 
 
 
