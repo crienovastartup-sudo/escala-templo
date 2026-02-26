@@ -1,5 +1,5 @@
 const CLIENT_ID = "965874692359-5sqoflo5ipp0dbb09menbs7iqfibeofc.apps.googleusercontent.com";
-const API_KEY = "AIzaSyBNec6Rf82zw8POHalMgM8YhdFkQlHUTVg";
+const API_KEY = "AIzaSyBNec6Rf82zw8POHalMgM8YHdFkQlHUTVg";
 const SPREADSHEET_ID = "1XggtZLa9j4d7x1JTm-7RMwnh9OqKQafAFpFut4lLx4U";
 
 let tokenClient;
@@ -187,6 +187,7 @@ function gerarPDF(){
   window.print();
 
 }
+
 
 
 
