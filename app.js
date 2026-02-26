@@ -1,189 +1,49 @@
-const CLIENT_ID = "965874692359-5sqoflo5ipp0dbb09menbs7iqfibeofc.apps.googleusercontent.com";
-const API_KEY = "AIzaSyBNec6Rf82zw8POHalMgM8YHdFkQlHUTVg";
-const SPREADSHEET_ID = "1XggtZLa9j4d7x1JTm-7RMwnh9OqKQafAFpFut4lLx4U";
+const API_KEY = "AIzaSyBNec6Rf82zw8POHalMgM8YHdFkQlHUTVg"; 
+const SPREADSHEET_ID = "1XggtZLa9j4d7x1JTm-7RMwnh9OqKQafAFpFut4lLx4U"; 
 
-let tokenClient;
-let dataStore = { escala: [], oficiantes: [], users: [] };
-let isAdmin = false;
+let dataStore = { escala: [], oficiantes: [] };
+let isAdmin = true; // Ativa as funções de salvar/excluir para todos
 
-// ÚNICA forma de carregar: aguarda a página estar pronta
+// Carrega tudo automaticamente ao abrir o site
 window.onload = function() {
-  // Inicializa o GAPI (para ler a planilha com a API_KEY)
   gapi.load('client', async () => {
     await gapi.client.init({
       apiKey: API_KEY,
       discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
     });
-  });
-
-  // Inicializa o Identidade Google (para o login)
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
-    callback: "" // Deixamos vazio, pois definiremos no clique do botão login
+    loadData(); // Chama a leitura dos dados na hora
   });
 };
 
-// Remova as chamadas gapiLoaded() e gisLoaded() soltas que estavam aqui.
-
-// Altere a função loadData para garantir a leitura correta das colunas
 async function loadData() {
-  const res = await gapi.client.sheets.spreadsheets.values.batchGet({
-    spreadsheetId: SPREADSHEET_ID,
-    ranges: ["ESCALA!A2:G", "OFICIANTES!A2:D", "USERS!A2:C"]
-  });
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SPREADSHEET_ID,
+      ranges: ["ESCALA!A2:G", "OFICIANTES!A2:D"]
+    });
 
-  const [escalaRaw, ofRaw, usersRaw] = res.result.valueRanges;
+    const [escalaRaw, ofRaw] = res.result.valueRanges;
 
-  // Mapeia os usuários: r[1] é a Coluna B (NOME), r[2] é a Coluna C (SENHA)
-  dataStore.users = (usersRaw.values || []).map(r => ({
-    nome: r[1] ? r[1].trim() : "", 
-    senha: r[2] ? r[2].trim() : ""
-  }));
+    dataStore.escala = (escalaRaw.values || []).map((r, i) => ({
+      row: i + 2, setor: r[0], data: r[1], turno: r[2],
+      id_oficiante: r[3], nome: r[4], hora_i: r[5] || "", hora_f: r[6] || ""
+    }));
 
-  // Carrega o restante dos dados
-  dataStore.escala = (escalaRaw.values || []).map((r, i) => ({
-    row: i + 2, setor: r[0], data: r[1], turno: r[2],
-    id_oficiante: r[3], nome: r[4], hora_i: r[5] || "", hora_f: r[6] || ""
-  }));
+    dataStore.oficiantes = (ofRaw.values || []).map(r => ({
+      id: r[0], nome: r[1], foto1: r[2]
+    }));
 
-  dataStore.oficiantes = (ofRaw.values || []).map(r => ({
-    id: r[0], nome: r[1], foto1: r[2], foto2: r[3]
-  }));
+    fillOficiantes();
+    renderEscala();
+    
+    // Esconde a caixa de login se ela ainda existir no HTML
+    if(document.getElementById("loginBox")) document.getElementById("loginBox").style.display = "none";
+    if(document.getElementById("app")) document.getElementById("app").style.display = "block";
 
-  fillOficiantes();
-  renderEscala();
-}
-
-// 2. Atualize a função de login para ser mais paciente
-async function login() {
-  const msg = document.getElementById("loginMsg");
-  msg.innerText = "Conectando ao Google...";
-
-  tokenClient.callback = async (resp) => {
-    if (resp.error !== undefined) {
-      msg.innerText = "Erro na autorização.";
-      return;
-    }
-
-    try {
-      msg.innerText = "Baixando dados da planilha...";
-      await loadData(); // Agora ele tem permissão total para ler
-
-      const u = document.getElementById("loginUser").value.trim().toLowerCase();
-      const p = document.getElementById("loginPass").value.trim();
-      
-      const usuarioValido = dataStore.users.find(x => 
-        String(x.nome).toLowerCase().trim() === u && 
-        String(x.senha).trim() === p
-      );
-
-      if (usuarioValido) {
-        isAdmin = true;
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("app").style.display = "block";
-      } else {
-        msg.innerText = "Usuário ou senha incorretos (David/teste123).";
-      }
-    } catch (err) {
-      console.error(err);
-      msg.innerText = "Erro técnico. Verifique se a planilha está aberta no seu navegador.";
-    }
-  };
-
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-}
-function fillOficiantes(){
-  const sel=document.getElementById("oficiante");
-  sel.innerHTML="";
-  dataStore.oficiantes.forEach(o=>{
-    const op=document.createElement("option");
-    op.value=o.id;
-    op.text=o.nome;
-    sel.appendChild(op);
-  });
-}
-
-function validar(payload){
-  if(payload.setor==="Recepção"){
-    if(!payload.hora_i||!payload.hora_f) return false;
-    if(payload.turno==1 && payload.hora_i<"07:00") return false;
-    if(payload.turno==2 && payload.hora_i<"12:00") return false;
-    if(payload.turno==3 && payload.hora_i<"17:00") return false;
+  } catch (e) {
+    console.error("Erro ao carregar:", e);
+    alert("Erro ao acessar a planilha pública. Verifique o compartilhamento.");
   }
-  return true;
 }
 
-async function salvarEscala(){
-  if(!isAdmin) return alert("Sem permissão");
-
-  const payload={
-    setor:setor.value,
-    data:data.value,
-    turno:turno.value,
-    id_oficiante:oficiante.value,
-    nome:dataStore.oficiantes.find(o=>o.id==oficiante.value).nome,
-    hora_i:horaInicio.value,
-    hora_f:horaFim.value
-  };
-
-  const dup=dataStore.escala.find(e=>e.data==payload.data && e.turno==payload.turno && e.id_oficiante==payload.id_oficiante);
-  if(dup) return alert("Duplicado!");
-
-  if(!validar(payload)) return alert("Horário inválido");
-
-  await gapi.client.sheets.spreadsheets.values.append({
-    spreadsheetId:SPREADSHEET_ID,
-    range:"ESCALA!A:G",
-    valueInputOption:"USER_ENTERED",
-    resource:{values:[[payload.setor,payload.data,payload.turno,payload.id_oficiante,payload.nome,payload.hora_i,payload.hora_f]]}
-  });
-
-  loadData();
-}
-
-function renderEscala(){
-  const tbody=document.querySelector("#tabela tbody");
-  tbody.innerHTML="";
-
-  dataStore.escala.forEach(e=>{
-    const tr=document.createElement("tr");
-    tr.className=e.setor;
-
-    const ofic=dataStore.oficiantes.find(o=>o.id==e.id_oficiante);
-
-    tr.innerHTML=`
-    <td>${e.data}</td>
-    <td>${new Date(e.data).toLocaleDateString("pt-BR",{weekday:"long"})}</td>
-    <td><img src="${ofic?.foto1||""}"></td>
-    <td>${e.nome}</td>
-    <td>${e.setor}</td>
-    <td>${e.turno}</td>
-    <td>${e.hora_i} - ${e.hora_f}</td>
-    <td>${isAdmin?`<button onclick="excluir(${e.row})">X</button>`:""}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-async function excluir(row){
-  if(!confirm("Excluir?")) return;
-
-  await gapi.client.sheets.spreadsheets.batchUpdate({
-    spreadsheetId:SPREADSHEET_ID,
-    resource:{requests:[{deleteDimension:{range:{sheetId:0,dimension:"ROWS",startIndex:row-1,endIndex:row}}}]}
-  });
-
-  loadData();
-}
-
-function gerarPDF(){
-  window.print();
-
-}
-
-
-
-
-
-
-
+// ... mantenha suas funções fillOficiantes, renderEscala, salvarEscala e excluir abaixo ...
