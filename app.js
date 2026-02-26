@@ -2,9 +2,27 @@ const CLIENT_ID = "965874692359-5sqoflo5ipp0dbb09menbs7iqfibeofc.apps.googleuser
 const API_KEY = "AIzaSyBNec6Rf82zw8POHalMgM8YHdFkQlHUTVg";
 const SPREADSHEET_ID = "1XggtZLa9j4d7x1JTm-7RMwnh9OqKQafAFpFut4lLx4U";
 
+// Mantenha suas constantes no topo como já estão
+
 let tokenClient;
 let dataStore = { escala: [], oficiantes: [], users: [] };
 let isAdmin = false;
+
+// 1. Unifique o carregamento para garantir a ordem
+window.onload = function() {
+  gapi.load('client', async () => {
+    await gapi.client.init({
+      apiKey: API_KEY,
+      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+    });
+  });
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/spreadsheets",
+    callback: "" // Definiremos dentro da função login
+  });
+};
 
 gapiLoaded();
 gisLoaded();
@@ -60,11 +78,11 @@ async function loadData() {
   renderEscala();
 }
 
+// 2. Atualize a função de login para ser mais paciente
 async function login() {
   const msg = document.getElementById("loginMsg");
-  msg.innerText = "Autorizando com Google...";
+  msg.innerText = "Conectando ao Google...";
 
-  // Definimos o que acontece APÓS você clicar em "Continuar" no Google
   tokenClient.callback = async (resp) => {
     if (resp.error !== undefined) {
       msg.innerText = "Erro na autorização.";
@@ -72,8 +90,8 @@ async function login() {
     }
 
     try {
-      msg.innerText = "Lendo planilha...";
-      await loadData(); // Baixa os usuários da aba USERS
+      msg.innerText = "Baixando dados da planilha...";
+      await loadData(); // Agora ele tem permissão total para ler
 
       const u = document.getElementById("loginUser").value.trim().toLowerCase();
       const p = document.getElementById("loginPass").value.trim();
@@ -88,17 +106,16 @@ async function login() {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("app").style.display = "block";
       } else {
-        msg.innerText = "Usuário ou senha não encontrados na aba USERS.";
+        msg.innerText = "Usuário ou senha incorretos (David/teste123).";
       }
     } catch (err) {
       console.error(err);
-      msg.innerText = "Erro ao acessar a planilha. Verifique se a API está ativa.";
+      msg.innerText = "Erro técnico. Verifique se a planilha está aberta no seu navegador.";
     }
   };
 
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
-
 function fillOficiantes(){
   const sel=document.getElementById("oficiante");
   sel.innerHTML="";
@@ -186,6 +203,7 @@ function gerarPDF(){
   window.print();
 
 }
+
 
 
 
