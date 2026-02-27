@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbykbwZ6tgGtctuGGqlE9ZzJ2uG-L1mANJ5VM0b_4M36x6jjwyqD55li-1F320dD1L-S/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzlgBO7X8dPDshdT739kiVYT2CYz2zRYp8cMRY0O3kU3cK9WKPuPNq4C93DcpZLtx-z2Q/exec";
 
 const loginBox = document.getElementById("loginBox");
 const content = document.getElementById("content");
@@ -102,6 +102,7 @@ async function api(action, payload = {}) {
 function formatDate(d) {
   return new Date(d).toLocaleDateString("pt-BR");
 }
+
 
 
 
