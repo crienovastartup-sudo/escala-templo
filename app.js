@@ -1,4 +1,4 @@
-const API = "SUA_URL_DO_APPS_SCRIPT";
+const API = "https://script.google.com/macros/s/AKfycbxlue6Nx3_6kmhxjNtbFfdfSULR_SBwgVVi3zQ-8rhGdPuXaJd_i276Ed_OMBj4MJ1QnQ/exec";
 
 let isAdmin = false;
 
@@ -49,3 +49,4 @@ function gerarPDF(){
 }
 
 loadCalendar();
+
