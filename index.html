@@ -1,60 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>Escala de Oficiantes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <title>Escala do Templo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="bg-gray-100">
 
-  <!-- LOGIN -->
-<div id="login">
-  <h2>Login Administrativo</h2>
-
-  <input type="text" id="usuario" placeholder="Usuário">
-  <input type="password" id="senha" placeholder="Senha">
-
-  <!-- BOTÃO ENTRAR -->
-  <button onclick="login()">Entrar</button>
-</div>
-
-<!-- APLICAÇÃO -->
-<div id="app" style="display:none;">
-  <h1>Escala do Templo</h1>
-  <p>Bem-vindo! Login realizado.</p>
-</div>
-
-
-<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl flex flex-col">
+<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow flex flex-col">
 
   <!-- HEADER -->
-  <header class="bg-indigo-700 text-white p-5 rounded-b-3xl">
-    <h1 class="text-2xl font-bold">Escala Digital</h1>
-    <p class="text-indigo-100 text-sm">Templo • Oficiantes</p>
+  <header class="bg-indigo-700 text-white p-4">
+    <h1 class="text-xl font-bold">Escala do Templo</h1>
+    <p class="text-sm opacity-80">Oficiantes</p>
   </header>
 
   <!-- LOGIN -->
   <section id="loginBox" class="p-4">
     <h2 class="font-bold mb-3">Login Administrativo</h2>
-    <input id="loginNome" placeholder="Usuário" class="input" />
-    <input id="loginSenha" type="password" placeholder="Senha" class="input mt-2" />
-    <button onclick="login()" class="btn-primary mt-3 w-full">Entrar</button>
+    <input id="loginNome" placeholder="Usuário" class="input">
+    <input id="loginSenha" type="password" placeholder="Senha" class="input mt-2">
+    <button onclick="login()" class="btn mt-3 w-full">Entrar</button>
   </section>
 
   <!-- CONTEÚDO -->
   <main id="content" class="flex-grow p-4 hidden"></main>
 
   <!-- NAV -->
-  <nav class="flex justify-around p-3 border-t bg-white">
-    <button onclick="loadEscala()"><i class="fa fa-calendar"></i></button>
-    <button onclick="loadOficiantes()"><i class="fa fa-users"></i></button>
-    <button onclick="logout()"><i class="fa fa-sign-out-alt"></i></button>
+  <nav class="flex justify-around p-3 border-t">
+    <button onclick="loadEscala()">Escala</button>
+    <button onclick="loadOficiantes()">Oficiantes</button>
+    <button onclick="logout()">Sair</button>
   </nav>
 
 </div>
@@ -62,4 +41,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-
