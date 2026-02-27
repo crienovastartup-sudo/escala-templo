@@ -8,25 +8,38 @@ let LOGADO = false;
 /* ================= LOGIN ================= */
 
 async function login() {
-  const nome = loginNome.value;
-  const senha = loginSenha.value;
+  console.log("🔐 Botão Entrar clicado");
 
-  const res = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "login",
-      nome,
-      senha
-    })
-  }).then(r => r.json());
+  const nome = document.getElementById("loginNome").value;
+  const senha = document.getElementById("loginSenha").value;
 
-  if (res.status === "ok") {
-    LOGADO = true;
-    loginBox.classList.add("hidden");
-    content.classList.remove("hidden");
-    loadEscala();
-  } else {
-    alert(res.message);
+  console.log("📨 Enviando:", nome, senha);
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "login",
+        nome,
+        senha
+      })
+    });
+
+    const data = await res.json();
+    console.log("📥 Resposta da API:", data);
+
+    if (data.status === "ok") {
+      LOGADO = true;
+      loginBox.classList.add("hidden");
+      content.classList.remove("hidden");
+      loadEscala();
+    } else {
+      alert(data.message);
+    }
+
+  } catch (err) {
+    console.error("❌ ERRO NO LOGIN:", err);
+    alert("Erro ao conectar com o servidor");
   }
 }
 
@@ -89,4 +102,5 @@ async function api(action, payload = {}) {
 function formatDate(d) {
   return new Date(d).toLocaleDateString("pt-BR");
 }
+
 
