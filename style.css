@@ -1,21 +1,54 @@
-.input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+/* Estilos para o FullCalendar e customizações visuais */
+
+.fc-event { 
+    cursor: pointer; 
+    border: none !important; 
+    border-radius: 6px !important; 
+    margin-bottom: 2px !important; 
 }
 
-.btn-primary {
-  background: #4f46e5;
-  color: white;
-  padding: 12px;
-  border-radius: 14px;
-  font-weight: bold;
+/* Cores dos Setores */
+.bg-batisterio { 
+    background-color: #b0e0e6 !important; 
+    color: #004b54 !important; 
+    border-left: 4px solid #00acc1 !important; 
 }
 
-.card {
-  background: #f9fafb;
-  padding: 12px;
-  border-radius: 16px;
-  margin-bottom: 10px;
+.bg-recepcao { 
+    background-color: #fef9c3 !important; 
+    color: #854d0e !important; 
+    border-left: 4px solid #facc15 !important; 
+}
+
+.bg-selamento { 
+    background-color: #dcfce7 !important; 
+    color: #166534 !important; 
+    border-left: 4px solid #22c55e !important; 
+}
+
+/* Loader de carregamento */
+.loader { 
+    border-top-color: #3498db; 
+    animation: spinner 1.5s linear infinite; 
+}
+
+@keyframes spinner { 
+    0% { transform: rotate(0deg); } 
+    100% { transform: rotate(360deg); } 
+}
+
+/* Ajustes de cabeçalho do calendário */
+.fc .fc-toolbar-title { 
+    font-size: 1.25rem !important; 
+    font-weight: 700; 
+    color: #1e293b; 
+}
+
+.fc .fc-button-primary { 
+    background-color: #3b82f6; 
+    border: none; 
+}
+
+.fc .fc-button-primary:hover { 
+    background-color: #2563eb; 
 }
