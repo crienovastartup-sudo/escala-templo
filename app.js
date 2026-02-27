@@ -4,33 +4,36 @@ let LOGADO = false;
 /* ================= LOGIN ================= */
 
 function login(){
-  const nome = document.getElementById("usuario").value;
-  const senha = document.getElementById("senha").value;
+  alert("Botão Entrar clicado"); // 🔎 TESTE VISUAL
+
+  const nome = document.getElementById("usuario").value.trim();
+  const senha = document.getElementById("senha").value.trim();
 
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "login",
-      nome,
-      senha
+      nome: nome,
+      senha: senha
     })
   })
   .then(r => r.json())
   .then(res => {
     if(res.status === "ok"){
-      alert("Login realizado com sucesso");
-      localStorage.setItem("user", res.user);
+      alert("Login realizado com sucesso!");
+
       document.getElementById("login").style.display = "none";
       document.getElementById("app").style.display = "block";
     } else {
-      alert(res.msg);
+      alert(res.msg || "Usuário ou senha inválidos");
     }
   })
   .catch(err => {
-    alert("Erro de conexão");
+    alert("Erro ao conectar com o servidor");
     console.error(err);
   });
 }
+
 function logout() {
   LOGADO = false;
   location.reload();
@@ -80,5 +83,6 @@ async function api(payload) {
   });
   return r.json();
 }
+
 
 
