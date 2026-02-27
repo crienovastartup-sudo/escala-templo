@@ -3,42 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <title>Escala do Templo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<h1>Escala do Templo</h1>
+<header>
+  <h1>📅 Escala do Templo</h1>
+  <div id="user-area">
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" class="hidden">Sair</button>
+  </div>
+</header>
 
-<section id="login">
-  <input id="usuario" placeholder="Usuário">
-  <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login(
-    document.getElementById('usuario').value,
-    document.getElementById('senha').value
-  )">Entrar</button>
+<section id="filters">
+  <select id="filterSetor">
+    <option value="">Todos os setores</option>
+    <option>Batistério</option>
+    <option>Recepção</option>
+    <option>Selamento</option>
+  </select>
+
+  <select id="filterTurno">
+    <option value="">Todos os turnos</option>
+    <option value="1">Turno 1</option>
+    <option value="2">Turno 2</option>
+    <option value="3">Turno 3</option>
+  </select>
+
+  <select id="filterOficiante">
+    <option value="">Todos os oficiantes</option>
+  </select>
+
+  <button id="addEscalaBtn" class="admin hidden">+ Nova Escala</button>
 </section>
-
-<hr>
 
 <section id="escala"></section>
 
+<!-- LOGIN -->
+<div class="modal hidden" id="loginModal">
+  <form id="loginForm">
+    <h2>Login Administrativo</h2>
+    <input type="text" id="loginNome" placeholder="Usuário" required />
+    <input type="password" id="loginSenha" placeholder="Senha" required />
+    <button type="submit">Entrar</button>
+    <button type="button" onclick="closeLogin()">Cancelar</button>
+  </form>
+</div>
+
+<!-- ESCALA -->
+<div class="modal hidden" id="escalaModal">
+  <form id="escalaForm">
+    <h2>Nova Escala</h2>
+
+    <select id="escalaSetor" required>
+      <option value="">Setor</option>
+      <option>Batistério</option>
+      <option>Recepção</option>
+      <option>Selamento</option>
+    </select>
+
+    <input type="date" id="escalaData" required />
+
+    <select id="escalaTurno" required>
+      <option value="">Turno</option>
+      <option value="1">Turno 1</option>
+      <option value="2">Turno 2</option>
+      <option value="3">Turno 3</option>
+    </select>
+
+    <select id="escalaOficiante" required></select>
+
+    <input type="time" id="horaInicial" />
+    <input type="time" id="horaFinal" />
+
+    <button type="submit">Salvar</button>
+    <button type="button" onclick="closeEscala()">Cancelar</button>
+  </form>
+</div>
+
 <script src="app.js"></script>
-<script>
-  async function carregarDados() {
-    const dados = await api({ action: "listEscala" });
-    document.getElementById("escala").innerHTML =
-      dados.map(e => `
-        <div>
-          <strong>${e.nome_oficiante}</strong> –
-          ${e.setor} –
-          ${e.data} –
-          Turno ${e.turno}
-        </div>
-      `).join("");
-  }
-
-  carregarDados();
-</script>
-
 </body>
 </html>
