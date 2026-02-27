@@ -89,3 +89,4 @@ async function api(action, payload = {}) {
 function formatDate(d) {
   return new Date(d).toLocaleDateString("pt-BR");
 }
+
