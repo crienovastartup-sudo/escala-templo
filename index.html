@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Escala do Templo</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4f46e5">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>Escala de Oficiantes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="bg-gray-100">
 
-<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl">
+<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl flex flex-col">
 
-<header class="bg-indigo-600 text-white p-5 rounded-b-3xl">
-  <h1 class="text-2xl font-bold">Escala do Templo</h1>
-  <p class="text-sm opacity-80">Visualização Pública • Login Administrativo</p>
-</header>
+  <!-- HEADER -->
+  <header class="bg-indigo-700 text-white p-5 rounded-b-3xl">
+    <h1 class="text-2xl font-bold">Escala Digital</h1>
+    <p class="text-indigo-100 text-sm">Templo • Oficiantes</p>
+  </header>
 
-<!-- LOGIN -->
-<section id="loginBox" class="p-4">
-  <input id="loginUser" placeholder="Usuário" class="input">
-  <input id="loginPass" type="password" placeholder="Senha" class="input mt-2">
-  <button onclick="login()" class="btn-primary mt-3">Entrar</button>
-</section>
+  <!-- LOGIN -->
+  <section id="loginBox" class="p-4">
+    <h2 class="font-bold mb-3">Login Administrativo</h2>
+    <input id="loginNome" placeholder="Usuário" class="input" />
+    <input id="loginSenha" type="password" placeholder="Senha" class="input mt-2" />
+    <button onclick="login()" class="btn-primary mt-3 w-full">Entrar</button>
+  </section>
 
-<!-- LOGOUT -->
-<section id="logoutBox" class="hidden p-4 text-right">
-  <button onclick="logout()" class="text-red-500 text-sm">Sair</button>
-</section>
+  <!-- CONTEÚDO -->
+  <main id="content" class="flex-grow p-4 hidden"></main>
 
-<!-- CALENDÁRIO -->
-<main id="calendar" class="p-4 space-y-4"></main>
-
-<button id="btnAdd" onclick="openScaleModal()"
-class="hidden fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg">
-＋
-</button>
+  <!-- NAV -->
+  <nav class="flex justify-around p-3 border-t bg-white">
+    <button onclick="loadEscala()"><i class="fa fa-calendar"></i></button>
+    <button onclick="loadOficiantes()"><i class="fa fa-users"></i></button>
+    <button onclick="logout()"><i class="fa fa-sign-out-alt"></i></button>
+  </nav>
 
 </div>
 
