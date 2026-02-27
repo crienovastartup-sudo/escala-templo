@@ -1,89 +1,91 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxQ-dhtZP0a0Uq2jtn4HiT1Cc3R0Ljy20zsyRx_SipiRbA_Cce5XofZSIkmrVJQkkvXsQ/exec";
+
+const loginBox = document.getElementById("loginBox");
+const content = document.getElementById("content");
+
 let LOGADO = false;
 
 /* ================= LOGIN ================= */
 
-function login(){
-  alert("Botão Entrar clicado"); // 🔎 TESTE VISUAL
+async function login() {
+  const nome = loginNome.value;
+  const senha = loginSenha.value;
 
-  const nome = document.getElementById("usuario").value.trim();
-  const senha = document.getElementById("senha").value.trim();
-
-  fetch(API_URL, {
+  const res = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "login",
-      nome: nome,
-      senha: senha
+      nome,
+      senha
     })
-  })
-  .then(r => r.json())
-  .then(res => {
-    if(res.status === "ok"){
-      alert("Login realizado com sucesso!");
+  }).then(r => r.json());
 
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-    } else {
-      alert(res.msg || "Usuário ou senha inválidos");
-    }
-  })
-  .catch(err => {
-    alert("Erro ao conectar com o servidor");
-    console.error(err);
-  });
+  if (res.status === "ok") {
+    LOGADO = true;
+    loginBox.classList.add("hidden");
+    content.classList.remove("hidden");
+    loadEscala();
+  } else {
+    alert(res.message);
+  }
 }
 
 function logout() {
   LOGADO = false;
-  location.reload();
+  content.classList.add("hidden");
+  loginBox.classList.remove("hidden");
 }
 
 /* ================= ESCALA ================= */
+
 async function loadEscala() {
-  const dados = await api({ entity: "escala", action: "list" });
-  renderEscala(dados);
-}
+  const res = await api("listEscala");
 
-function renderEscala(lista) {
-  content.innerHTML = `<h2 class="font-bold mb-3">Escala</h2>`;
+  let html = `<h2 class="font-bold mb-3">Escala</h2>`;
 
-  lista.forEach(e => {
-    content.innerHTML += `
+  res.forEach(e => {
+    html += `
       <div class="card">
-        <b>${e.data}</b><br>
-        ${e.nome_oficiante}<br>
-        ${e.setor} • ${e.turno}<br>
-        ${e.hora_inicial} - ${e.hora_final}
+        <strong>${e.nome_oficiante}</strong><br>
+        ${e.setor} • Turno ${e.turno}<br>
+        ${formatDate(e.data)}
       </div>
     `;
   });
+
+  content.innerHTML = html;
 }
 
 /* ================= OFICIANTES ================= */
-async function loadOficiantes() {
-  const lista = await api({ entity: "oficiantes", action: "list" });
-  content.innerHTML = `<h2 class="font-bold mb-3">Oficiantes</h2>`;
 
-  lista.forEach(o => {
-    content.innerHTML += `
-      <div class="card text-center">
-        <img src="${o.foto1}" class="w-16 h-16 rounded-full mx-auto mb-2">
-        <b>${o.nome}</b>
+async function loadOficiantes() {
+  const res = await api("listOficiantes");
+
+  let html = `<h2 class="font-bold mb-3">Oficiantes</h2>`;
+
+  res.forEach(o => {
+    html += `
+      <div class="card flex gap-2 items-center">
+        <img src="${o.foto1 || 'https://via.placeholder.com/40'}" width="40">
+        <strong>${o.nome}</strong>
       </div>
     `;
   });
+
+  content.innerHTML = html;
 }
 
 /* ================= API ================= */
-async function api(payload) {
-  const r = await fetch(API_URL, {
+
+async function api(action, payload = {}) {
+  return fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify(payload)
-  });
-  return r.json();
+    body: JSON.stringify({ action, ...payload })
+  }).then(r => r.json());
 }
 
+/* ================= UTIL ================= */
 
-
-
+function formatDate(d) {
+  return new Date(d).toLocaleDateString("pt-BR");
+}
