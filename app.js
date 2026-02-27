@@ -7,3 +7,19 @@ async function api(data) {
   });
   return res.json();
 }
+
+async function login(nome, senha) {
+  const res = await api({
+    action: "login",
+    nome,
+    senha
+  });
+
+  if (res.admin) {
+    localStorage.setItem("admin", "true");
+    alert("Login realizado com sucesso");
+    carregarDados();
+  } else {
+    alert("Usuário ou senha inválidos");
+  }
+}
