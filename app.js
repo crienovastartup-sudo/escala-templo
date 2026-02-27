@@ -2,26 +2,35 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxFtd8kHB2zyFYCdMyDF1zB
 let LOGADO = false;
 
 /* ================= LOGIN ================= */
-async function login() {
-  const nome = loginNome.value;
-  const senha = loginSenha.value;
 
-  const res = await api({
-    entity: "users",
-    action: "login",
-    payload: { nome, senha }
+function login(){
+  const nome = document.getElementById("usuario").value;
+  const senha = document.getElementById("senha").value;
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "login",
+      nome,
+      senha
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if(res.status === "ok"){
+      alert("Login realizado com sucesso");
+      localStorage.setItem("user", res.user);
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    } else {
+      alert(res.msg);
+    }
+  })
+  .catch(err => {
+    alert("Erro de conexão");
+    console.error(err);
   });
-
-  if (res.status === "ok") {
-    LOGADO = true;
-    loginBox.classList.add("hidden");
-    content.classList.remove("hidden");
-    loadEscala();
-  } else {
-    alert(res.message);
-  }
 }
-
 function logout() {
   LOGADO = false;
   location.reload();
@@ -71,4 +80,5 @@ async function api(payload) {
   });
   return r.json();
 }
+
 
