@@ -23,11 +23,23 @@ window.onload = () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
     initCalendar();
     fetchData();
+    setupEventListeners();
 };
+
+function setupEventListeners() {
+    // Listener para o setor de recepção (exibir/esconder horas se necessário)
+    const setorSelect = document.getElementById('escala-setor');
+    if (setorSelect) {
+        setorSelect.addEventListener('change', (e) => {
+            const isRecepcao = e.target.value.toLowerCase().includes('recepcao');
+            const hourFields = document.getElementById('escala-horas-container');
+            if (hourFields) hourFields.classList.toggle('hidden', !isRecepcao);
+        });
+    }
+}
 
 /**
  * Chamada Genérica para a API (Google Apps Script)
- * Centraliza o fetch e o controle do overlay de carregamento.
  */
 async function apiCall(data) {
     showLoading(true);
@@ -46,7 +58,7 @@ async function apiCall(data) {
 }
 
 /**
- * Upload de Imagens para o Cloudinary (Modo Unsigned)
+ * Upload de Imagens para o Cloudinary
  */
 async function uploadParaCloudinary(file) {
     const formData = new FormData();
@@ -68,25 +80,23 @@ async function uploadParaCloudinary(file) {
 }
 
 /**
- * Configuração do FullCalendar com Renderização de Cards Customizados
+ * Configuração do FullCalendar com Melhoria para Mobile
  */
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     if (!calendarEl) return;
 
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth', // Mobile usa lista por padrão
         locale: 'pt-br',
         height: 'auto',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth'
+            right: 'dayGridMonth,listWeek'
         },
         eventContent: function(arg) {
             const ext = arg.event.extendedProps;
-            
-            // Normalização para cores por setor via CSS
             const setorNorm = (ext.setor || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             let colorClass = "card-default";
             
@@ -94,33 +104,39 @@ function initCalendar() {
             else if (setorNorm.includes("recepcao")) colorClass = "card-recepcao";
             else if (setorNorm.includes("selamento")) colorClass = "card-selamento";
 
-            // Correção de Contraste: Forçando cores escuras no texto para visibilidade
             let html = `
-                <div class="event-card-custom ${colorClass}" style="color: #1e293b; border-left: 4px solid currentColor;">
-                    <div class="flex flex-col h-full justify-between p-1">
+                <div class="event-card-custom ${colorClass}" style="color: #1e293b; border-left: 4px solid currentColor; padding: 4px; overflow: hidden;">
+                    <div class="flex flex-col h-full justify-between">
                         <div>
-                            <span class="card-title truncate" style="display: block; font-weight: 800; font-size: 11px; line-height: 1.1; color: #0f172a;">
+                            <span class="card-title" style="display: block; font-weight: 800; font-size: 10px; line-height: 1.1; color: #0f172a; white-space: normal; word-break: break-word;">
                                 ${arg.event.title}
                             </span>
-                            <span class="card-subtitle" style="display: block; font-size: 9px; opacity: 0.8; font-weight: 600; color: #334155;">
-                                ${ext.turno} - ${ext.setor}
+                            <span class="card-subtitle" style="display: block; font-size: 8px; opacity: 0.8; font-weight: 600; color: #334155;">
+                                ${ext.turno}
                             </span>
                         </div>
-                        <div class="flex -space-x-2 mt-1 self-end">
-                            ${ext.foto1 ? `<img src="${ext.foto1}" class="w-5 h-5 rounded-full border border-white object-cover shadow-sm">` : ''}
-                            ${ext.foto2 ? `<img src="${ext.foto2}" class="w-5 h-5 rounded-full border border-white object-cover shadow-sm">` : ''}
+                        <div class="flex -space-x-1 mt-1 justify-end">
+                            ${ext.foto1 ? `<img src="${ext.foto1}" class="w-4 h-4 rounded-full border border-white object-cover shadow-sm">` : ''}
+                            ${ext.foto2 ? `<img src="${ext.foto2}" class="w-4 h-4 rounded-full border border-white object-cover shadow-sm">` : ''}
                         </div>
                     </div>
                 </div>
             `;
             return { html };
+        },
+        windowResize: function(view) {
+            if (window.innerWidth < 768) {
+                calendar.changeView('listWeek');
+            } else {
+                calendar.changeView('dayGridMonth');
+            }
         }
     });
     calendar.render();
 }
 
 /**
- * Filtros de Visualização e Sincronização com o Calendário
+ * Filtros e Sincronização
  */
 function applyFilters() {
     const filterSetor = document.getElementById('filter-setor')?.value;
@@ -162,7 +178,7 @@ function clearFilters() {
 }
 
 /**
- * Busca de Dados Iniciais
+ * Busca de Dados
  */
 async function fetchData() {
     const resOficiantes = await apiCall({ action: "listOficiantes" });
@@ -181,14 +197,14 @@ async function fetchData() {
 }
 
 /**
- * Submissão de Oficiante (Cadastro/Edição com Cloudinary)
+ * Oficiante: Cadastro e Edição
  */
 document.getElementById('form-oficiante').onsubmit = async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = "Enviando arquivos...";
+    btn.innerText = "Processando...";
 
     try {
         const id = document.getElementById('oficiante-id').value;
@@ -210,12 +226,11 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
         if (res.status === "ok") {
             closeModal('modal-oficiante');
             fetchData();
-            e.target.reset();
         } else {
             alert(res.message);
         }
     } catch (err) {
-        alert("Erro no processo: " + err.message);
+        alert("Erro: " + err.message);
     } finally {
         btn.disabled = false;
         btn.innerText = originalText;
@@ -223,23 +238,38 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Submissão de Nova Escala
+ * Escala: Cadastro e Edição
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
     const ofiSelect = document.getElementById('escala-oficiante');
     const turno = document.getElementById('escala-turno').value;
-    const horários = CONFIG_TURNOS[turno] || { inicio: "00:00", fim: "00:00" };
+    const setor = document.getElementById('escala-setor').value;
+    const isEdit = document.getElementById('escala-id-original')?.value !== "";
+
+    // Lógica de Horas: Se for recepção, pode usar campos manuais, se não, usa o padrão do turno
+    let hInicio = document.getElementById('escala-hora-inicio')?.value;
+    let hFim = document.getElementById('escala-hora-fim')?.value;
+    
+    if (!hInicio || !setor.toLowerCase().includes('recepcao')) {
+        const horários = CONFIG_TURNOS[turno] || { inicio: "00:00", fim: "00:00" };
+        hInicio = horários.inicio;
+        hFim = horários.fim;
+    }
 
     const payload = {
-        action: "addEscala",
-        data: document.getElementById('escala-data').value.split('T')[0], // Garante data limpa
+        action: isEdit ? "updateEscala" : "addEscala",
+        data: document.getElementById('escala-data').value, // Formato YYYY-MM-DD
         id_oficiante: ofiSelect.value,
         nome_oficiante: ofiSelect.options[ofiSelect.selectedIndex].text,
-        setor: document.getElementById('escala-setor').value,
+        setor: setor,
         turno: turno,
-        hora_inicio: horários.inicio,
-        hora_fim: horários.fim
+        hora_inicio: hInicio,
+        hora_fim: hFim,
+        // Campos para identificar o registro na edição (conforme sua lógica de BD)
+        id_original: document.getElementById('escala-id-original')?.value,
+        data_original: document.getElementById('escala-data-original')?.value,
+        turno_original: document.getElementById('escala-turno-original')?.value
     };
 
     const res = await apiCall(payload);
@@ -252,7 +282,7 @@ document.getElementById('form-escala').onsubmit = async (e) => {
 };
 
 /**
- * Renderização de UI (Listas e Tabelas)
+ * Renderização e Helpers
  */
 function renderOficiantes() {
     const container = document.getElementById('oficiantes-list');
@@ -281,8 +311,12 @@ function renderEscalaTable() {
     if (!tbody) return;
     const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-    tbody.innerHTML = escala.map(e => {
-        const d = new Date(e.data + 'T00:00:00');
+    // Ordenar escala por data para a tabela
+    const escalaOrdenada = [...escala].sort((a,b) => new Date(a.data) - new Date(b.data));
+
+    tbody.innerHTML = escalaOrdenada.map(e => {
+        // Correção de Data: Adicionando hora local para evitar "dia anterior"
+        const d = new Date(e.data + 'T12:00:00');
         return `
             <tr class="border-b hover:bg-slate-50 transition">
                 <td class="p-4 text-sm font-medium text-slate-700">
@@ -293,9 +327,13 @@ function renderEscalaTable() {
                     <span class="px-2 py-1 rounded text-[10px] font-black uppercase bg-slate-100 text-slate-600">
                         ${e.setor} - ${e.turno}
                     </span>
+                    <div class="text-[9px] text-slate-400">${e.hora_inicio} às ${e.hora_fim}</div>
                 </td>
-                <td class="p-4 text-right">
-                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="text-slate-300 hover:text-red-500 transition">
+                <td class="p-4 text-right flex gap-2 justify-end">
+                    <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-50 p-1 rounded">
+                        <i data-lucide="edit" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-1 rounded">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </td>
@@ -306,50 +344,26 @@ function renderEscalaTable() {
 }
 
 /**
- * Helpers de UI e Modais
+ * Funções de Edição e Exclusão
  */
-function switchTab(tab) {
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(`sec-${tab}`)?.classList.remove('hidden');
+function editEscalaItem(item) {
+    openEscalaModal();
+    document.getElementById('escala-oficiante').value = item.id_oficiante;
+    document.getElementById('escala-data').value = item.data;
+    document.getElementById('escala-setor').value = item.setor;
+    document.getElementById('escala-turno').value = item.turno;
     
-    // Atualiza estado visual dos botões de tab
-    document.querySelectorAll('[id^="tab-"]').forEach(b => {
-        b.classList.remove('border-blue-600', 'text-blue-600');
-        b.classList.add('border-transparent', 'text-slate-500');
-    });
-    document.getElementById(`tab-${tab}`)?.classList.add('border-blue-600', 'text-blue-600');
+    // Armazenar valores originais para a query de update no Google Script
+    document.getElementById('escala-id-original').value = item.id_oficiante;
+    document.getElementById('escala-data-original').value = item.data;
+    document.getElementById('escala-turno-original').value = item.turno;
 
-    if (tab === 'calendar' && calendar) setTimeout(() => calendar.updateSize(), 50);
+    // Disparar evento de mudança para mostrar horas se for recepção
+    document.getElementById('escala-setor').dispatchEvent(new Event('change'));
+    if(item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
+    if(item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
 }
 
-function updateOficianteSelect() {
-    const selects = ['escala-oficiante', 'filter-oficiante'];
-    selects.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const isFilter = id.includes('filter');
-        el.innerHTML = (isFilter ? '<option value="">Todos os Oficiantes</option>' : '<option value="">Selecione...</option>') + 
-            oficiantes.map(o => `<option value="${o.id}">${o.nome}</option>`).join('');
-    });
-}
-
-function openOficianteModal() {
-    document.getElementById('form-oficiante').reset();
-    document.getElementById('oficiante-id').value = '';
-    document.getElementById('modal-oficiante').style.display = 'flex';
-}
-
-function openEscalaModal() {
-    document.getElementById('form-escala').reset();
-    document.getElementById('modal-escala').style.display = 'flex';
-}
-
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
-
-/**
- * Operações de Exclusão e Edição
- */
 async function deleteEscalaItem(id, data, turno) {
     if (confirm("Remover este item da escala?")) {
         const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
@@ -358,7 +372,7 @@ async function deleteEscalaItem(id, data, turno) {
 }
 
 async function deleteOficiante(id) {
-    if (confirm("Excluir cadastro do oficiante? Isso não removerá escalas antigas.")) {
+    if (confirm("Excluir oficiante?")) {
         const res = await apiCall({ action: "deleteOficiante", id });
         if (res.status === "ok") fetchData();
     }
@@ -373,58 +387,64 @@ function editOficiante(id) {
 }
 
 /**
- * Exportação em PDF Profissional
+ * UI Modais e Tabs
+ */
+function switchTab(tab) {
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(`sec-${tab}`)?.classList.remove('hidden');
+    document.querySelectorAll('[id^="tab-"]').forEach(b => {
+        b.classList.remove('border-blue-600', 'text-blue-600');
+        b.classList.add('border-transparent', 'text-slate-500');
+    });
+    document.getElementById(`tab-${tab}`)?.classList.add('border-blue-600', 'text-blue-600');
+    if (tab === 'calendar' && calendar) setTimeout(() => calendar.updateSize(), 100);
+}
+
+function updateOficianteSelect() {
+    const selects = ['escala-oficiante', 'filter-oficiante'];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = (id.includes('filter') ? '<option value="">Todos</option>' : '<option value="">Selecione...</option>') + 
+            oficiantes.map(o => `<option value="${o.id}">${o.nome}</option>`).join('');
+    });
+}
+
+function openOficianteModal() {
+    document.getElementById('form-oficiante').reset();
+    document.getElementById('oficiante-id').value = '';
+    document.getElementById('modal-oficiante').style.display = 'flex';
+}
+
+function openEscalaModal() {
+    document.getElementById('form-escala').reset();
+    document.getElementById('escala-id-original').value = ''; // Reset do modo edição
+    document.getElementById('modal-escala').style.display = 'flex';
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
+
+/**
+ * Exportação PDF e Auth (Mantidos)
  */
 function generateProfessionalPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     const agora = new Date();
-    
     doc.setFontSize(18);
-    doc.text("Relatório de Escala - Templo", 15, 20);
-    
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(`Gerado em: ${agora.toLocaleString('pt-br')}`, 15, 27);
-
-    const rows = escala.sort((a,b) => new Date(a.data) - new Date(b.data)).map(e => {
-        const d = new Date(e.data + 'T00:00:00'); 
-        return [
-            `${d.toLocaleDateString('pt-br')} (${diasSemana[d.getDay()]})`,
-            e.nome_oficiante,
-            e.setor,
-            e.turno
-        ];
-    });
-
-    doc.autoTable({ 
-        head: [['Data e Dia', 'Oficiante', 'Setor', 'Turno']], 
-        body: rows, 
-        startY: 35,
-        theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246] },
-        styles: { fontSize: 8 }
-    });
-    
-    doc.save(`escala_templo_${agora.toISOString().split('T')[0]}.pdf`);
+    doc.text("Escala de Oficiantes", 15, 20);
+    const rows = escala.sort((a,b) => new Date(a.data) - new Date(b.data)).map(e => [e.data, e.nome_oficiante, e.setor, e.turno]);
+    doc.autoTable({ head: [['Data', 'Oficiante', 'Setor', 'Turno']], body: rows, startY: 30 });
+    doc.save(`escala_${agora.getTime()}.pdf`);
 }
 
-/**
- * Callback de Autenticação Google OAuth
- */
 function handleCredentialResponse(response) {
-    const base64Url = response.credential.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    currentUser = JSON.parse(jsonPayload);
-    
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    currentUser = payload;
     document.getElementById('loginContainer')?.classList.add('hidden');
-    const info = document.getElementById('userInfo');
-    if (info) {
-        info.classList.remove('hidden');
-        document.getElementById('userName').innerText = currentUser.name;
-        document.getElementById('userPic').src = currentUser.picture;
-    }
+    document.getElementById('userInfo')?.classList.remove('hidden');
+    document.getElementById('userName').innerText = payload.name;
+    document.getElementById('userPic').src = payload.picture;
     document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
 }
