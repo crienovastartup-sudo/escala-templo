@@ -144,17 +144,18 @@ async function uploadParaCloudinary(file) {
             body: formData
         });
         
+        const data = await response.json();
+
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Cloudinary Error:", errorData);
-            return null;
+            console.error("Cloudinary Error Details:", data);
+            // Lança erro específico para ajudar no diagnóstico
+            throw new Error(data.error ? data.error.message : "Erro desconhecido no Cloudinary");
         }
         
-        const data = await response.json();
         return data.secure_url || ""; 
     } catch (error) {
         console.error("Falha no upload Cloudinary:", error);
-        return null;
+        throw error; // Re-lança para ser capturado pelo onsubmit
     }
 }
 
@@ -170,7 +171,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
     
     if (btnSalvar) {
         btnSalvar.disabled = true;
-        btnSalvar.innerText = "Processando...";
+        btnSalvar.innerText = "Enviando fotos...";
     }
 
     try {
@@ -179,7 +180,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
         const input2 = document.getElementById('fotoInput2');
         
         if (!input1 || !input2) {
-            throw new Error("Inputs de foto não encontrados no HTML. Verifique os IDs.");
+            throw new Error("Inputs de foto não encontrados no HTML (IDs fotoInput1/2).");
         }
 
         const file1 = input1.files[0];
@@ -190,16 +191,24 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
         let url1 = ori ? ori.foto1 : "";
         let url2 = ori ? ori.foto2 : "";
 
+        // Tenta upload da Foto 1
         if (file1) {
-            if (btnSalvar) btnSalvar.innerText = "Enviando Foto 1...";
-            const uploadedUrl = await uploadParaCloudinary(file1);
-            if (uploadedUrl) url1 = uploadedUrl;
+            try {
+                const uploadedUrl = await uploadParaCloudinary(file1);
+                if (uploadedUrl) url1 = uploadedUrl;
+            } catch (err) {
+                throw new Error("Erro ao processar Foto 1 no servidor de imagens: " + err.message);
+            }
         }
 
+        // Tenta upload da Foto 2
         if (file2) {
-            if (btnSalvar) btnSalvar.innerText = "Enviando Foto 2...";
-            const uploadedUrl = await uploadParaCloudinary(file2);
-            if (uploadedUrl) url2 = uploadedUrl;
+            try {
+                const uploadedUrl = await uploadParaCloudinary(file2);
+                if (uploadedUrl) url2 = uploadedUrl;
+            } catch (err) {
+                throw new Error("Erro ao processar Foto 2 no servidor de imagens: " + err.message);
+            }
         }
 
         const payload = {
@@ -219,11 +228,11 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
             e.target.reset();
             alert("Sucesso ao salvar!");
         } else {
-            alert("Erro: " + res.message);
+            alert("Erro na Planilha: " + res.message);
         }
     } catch (err) {
-        console.error("Erro no fluxo:", err);
-        alert("Erro crítico: " + err.message);
+        console.error("Erro no fluxo completo:", err);
+        alert(err.message);
     } finally {
         if (btnSalvar) {
             btnSalvar.disabled = false;
