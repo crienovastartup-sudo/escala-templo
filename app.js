@@ -19,6 +19,29 @@ let calendar;
 let currentUser = null; 
 
 /**
+ * Funções Utilitárias de Data (Para resolver o erro de "undefined" e datas ISO)
+ */
+function formatarDataLimpa(dataStr) {
+    if (!dataStr) return { dataFormatada: "Data Inválida", diaSemana: "N/A", parts: [] };
+    
+    // Remove qualquer informação de tempo (T03:00...) se existir
+    const apenasData = dataStr.includes('T') ? dataStr.split('T')[0] : dataStr;
+    const parts = apenasData.split('-'); // Esperado YYYY-MM-DD
+    
+    if (parts.length !== 3) return { dataFormatada: apenasData, diaSemana: "N/A", parts };
+
+    // Criar objeto de data garantindo que não há distorção de fuso horário
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+    const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    
+    return {
+        dataFormatada: `${parts[2]}/${parts[1]}/${parts[0]}`,
+        diaSemana: diasSemana[d.getDay()],
+        parts: parts
+    };
+}
+
+/**
  * Inicialização do Sistema
  */
 window.onload = () => {
@@ -174,7 +197,7 @@ function applyFilters() {
         const ofi = oficiantes.find(o => String(o.id) === String(e.id_oficiante));
         calendar.addEvent({
             title: e.nome_oficiante,
-            start: e.data, 
+            start: e.data.split('T')[0], 
             allDay: true,
             extendedProps: {
                 setor: e.setor,
@@ -266,7 +289,9 @@ document.getElementById('form-escala').onsubmit = async (e) => {
     
     const idOrig = document.getElementById('escala-id-original').value;
     const dataOrig = document.getElementById('escala-data-original').value;
-    const isEdit = idOrig !== "" && dataOrig !== "";
+    
+    // Forçar a deteção de Novo Registo se os campos ocultos estiverem vazios
+    const isEdit = (idOrig && idOrig.trim() !== "" && dataOrig && dataOrig.trim() !== "");
 
     let hInicio = document.getElementById('escala-hora-inicio')?.value;
     let hFim = document.getElementById('escala-hora-fim')?.value;
@@ -306,22 +331,18 @@ document.getElementById('form-escala').onsubmit = async (e) => {
 function renderEscalaTable() {
     const tbody = document.getElementById('escala-table-body');
     if (!tbody) return;
-    const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
     const escalaOrdenada = [...escala].sort((a,b) => a.data.localeCompare(b.data));
 
     tbody.innerHTML = escalaOrdenada.map(e => {
-        const cleanData = e.data.includes('T') ? e.data.split('T')[0] : e.data;
-        const parts = cleanData.split('-');
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
-        
+        const infoData = formatarDataLimpa(e.data);
         const isRecepcao = e.setor.toUpperCase() === 'RECEPÇÃO';
         const horarioInfo = isRecepcao ? `<div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio || ''} às ${e.hora_fim || ''}</div>` : '';
 
         return `
             <tr class="border-b hover:bg-slate-50 transition">
                 <td class="p-4 text-sm font-medium text-slate-700">
-                    <div class="font-bold">${parts[2]}/${parts[1]}/${parts[0]} - ${diasSemana[d.getDay()]}</div>
+                    <div class="font-bold">${infoData.dataFormatada} - ${infoData.diaSemana}</div>
                 </td>
                 <td class="p-4 font-bold text-slate-900">${e.nome_oficiante}</td>
                 <td class="p-4">
@@ -334,7 +355,7 @@ function renderEscalaTable() {
                     <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition">
                         <i data-lucide="edit" class="w-4 h-4"></i>
                     </button>
-                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${cleanData}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition">
+                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </td>
@@ -452,12 +473,10 @@ function openEscalaModal() {
     const form = document.getElementById('form-escala');
     if (form) form.reset();
     
-    // Limpeza de campos ocultos (Crucial para o botão "Adicionar" funcionar)
-    const fieldsToClear = ['escala-id-original', 'escala-data-original', 'escala-turno-original'];
-    fieldsToClear.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = '';
-    });
+    // Limpeza radical de campos ocultos para garantir que é um NOVO registo
+    document.getElementById('escala-id-original').value = '';
+    document.getElementById('escala-data-original').value = '';
+    document.getElementById('escala-turno-original').value = '';
     
     document.getElementById('escala-setor').dispatchEvent(new Event('change'));
     
@@ -471,13 +490,12 @@ function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
 
 /**
- * Exportação em PDF (Corrigida e Profissional)
+ * Exportação em PDF (Refatorada para eliminar undefined e erros de fuso horário)
  */
 function generateProfessionalPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const agora = new Date();
-    const diasSemanaRelatorio = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     
     doc.setFontSize(18);
     doc.text("Escala Oficial do Templo", 15, 20);
@@ -487,15 +505,17 @@ function generateProfessionalPDF() {
     doc.text(`Relatório extraído em: ${agora.toLocaleDateString('pt-br')} ${agora.getHours()}:${agora.getMinutes()}`, 15, 27);
 
     const rows = escala.sort((a,b) => a.data.localeCompare(b.data)).map(e => {
-        // Limpeza da string de data para evitar T03:00...
-        const cleanDataStr = e.data.includes('T') ? e.data.split('T')[0] : e.data;
-        const parts = cleanDataStr.split('-');
-        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        const info = formatarDataLimpa(e.data);
+        const diaSemanaCurto = info.diaSemana.substring(0, 3);
+        const dataFinal = `${info.dataFormatada} (${diaSemanaCurto})`;
         
-        const dataFormatada = `${parts[2]}/${parts[1]}/${parts[0]} (${diasSemanaRelatorio[d.getDay()] || 'N/A'})`;
-        const horarioDisplay = e.setor.toUpperCase() === 'RECEPÇÃO' ? `${e.hora_inicio || '00:00'}-${e.hora_fim || '00:00'}` : e.turno;
+        // Formatação do horário para evitar campos undefined
+        let turnoHorario = e.turno || "N/A";
+        if (e.setor.toUpperCase() === 'RECEPÇÃO' && e.hora_inicio && e.hora_fim) {
+            turnoHorario = `${e.hora_inicio} - ${e.hora_fim}`;
+        }
 
-        return [dataFormatada, e.nome_oficiante, e.setor, horarioDisplay];
+        return [dataFinal, e.nome_oficiante || "---", e.setor || "---", turnoHorario];
     });
 
     doc.autoTable({ 
@@ -503,11 +523,11 @@ function generateProfessionalPDF() {
         body: rows, 
         startY: 35,
         theme: 'striped',
-        headStyles: { fillColor: [30, 41, 59] },
+        headStyles: { fillColor: [30, 41, 59], fontSize: 9 },
         styles: { fontSize: 8, cellPadding: 3 },
         columnStyles: {
-            0: { cellWidth: 45 },
-            1: { cellWidth: 60 },
+            0: { cellWidth: 40 },
+            1: { cellWidth: 65 },
             2: { cellWidth: 40 },
             3: { cellWidth: 40 }
         }
