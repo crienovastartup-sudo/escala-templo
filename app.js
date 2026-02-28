@@ -27,7 +27,7 @@ window.onload = () => {
 };
 
 function setupEventListeners() {
-    // Listener para o setor de recepção (exibir/esconder horas se necessário)
+    // Listener para o setor de recepção
     const setorSelect = document.getElementById('escala-setor');
     if (setorSelect) {
         setorSelect.addEventListener('change', (e) => {
@@ -36,10 +36,16 @@ function setupEventListeners() {
             if (hourFields) hourFields.classList.toggle('hidden', !isRecepcao);
         });
     }
+
+    // Listeners para os Filtros do Calendário
+    ['filter-setor', 'filter-turno', 'filter-oficiante'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', applyFilters);
+    });
 }
 
 /**
- * Chamada Genérica para a API (Google Apps Script)
+ * Chamada Genérica para a API
  */
 async function apiCall(data) {
     showLoading(true);
@@ -80,16 +86,23 @@ async function uploadParaCloudinary(file) {
 }
 
 /**
- * Configuração do FullCalendar com Melhoria para Mobile
+ * Configuração do FullCalendar (Foco em Visibilidade e Português)
  */
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     if (!calendarEl) return;
 
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth', // Mobile usa lista por padrão
+        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         locale: 'pt-br',
         height: 'auto',
+        buttonText: {
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            day: 'Dia',
+            list: 'Agenda'
+        },
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -104,32 +117,29 @@ function initCalendar() {
             else if (setorNorm.includes("recepcao")) colorClass = "card-recepcao";
             else if (setorNorm.includes("selamento")) colorClass = "card-selamento";
 
+            // Fotos aumentadas para w-6 h-6 (24px) para melhor visibilidade
             let html = `
-                <div class="event-card-custom ${colorClass}" style="color: #1e293b; border-left: 4px solid currentColor; padding: 4px; overflow: hidden;">
+                <div class="event-card-custom ${colorClass}" style="color: #1e293b; border-left: 4px solid currentColor; padding: 6px; overflow: hidden; min-height: 50px;">
                     <div class="flex flex-col h-full justify-between">
                         <div>
-                            <span class="card-title" style="display: block; font-weight: 800; font-size: 10px; line-height: 1.1; color: #0f172a; white-space: normal; word-break: break-word;">
+                            <span class="card-title" style="display: block; font-weight: 800; font-size: 11px; line-height: 1.2; color: #0f172a; white-space: normal; word-break: break-word;">
                                 ${arg.event.title}
                             </span>
-                            <span class="card-subtitle" style="display: block; font-size: 8px; opacity: 0.8; font-weight: 600; color: #334155;">
-                                ${ext.turno}
+                            <span class="card-subtitle" style="display: block; font-size: 9px; opacity: 0.9; font-weight: 700; color: #475569;">
+                                ${ext.turno} - ${ext.setor}
                             </span>
                         </div>
-                        <div class="flex -space-x-1 mt-1 justify-end">
-                            ${ext.foto1 ? `<img src="${ext.foto1}" class="w-4 h-4 rounded-full border border-white object-cover shadow-sm">` : ''}
-                            ${ext.foto2 ? `<img src="${ext.foto2}" class="w-4 h-4 rounded-full border border-white object-cover shadow-sm">` : ''}
+                        <div class="flex -space-x-1.5 mt-2 justify-end">
+                            ${ext.foto1 ? `<img src="${ext.foto1}" class="w-6 h-6 rounded-full border-2 border-white object-cover shadow-md">` : ''}
+                            ${ext.foto2 ? `<img src="${ext.foto2}" class="w-6 h-6 rounded-full border-2 border-white object-cover shadow-md">` : ''}
                         </div>
                     </div>
                 </div>
             `;
             return { html };
         },
-        windowResize: function(view) {
-            if (window.innerWidth < 768) {
-                calendar.changeView('listWeek');
-            } else {
-                calendar.changeView('dayGridMonth');
-            }
+        windowResize: function() {
+            calendar.changeView(window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth');
         }
     });
     calendar.render();
@@ -155,6 +165,7 @@ function applyFilters() {
 
     filtrados.forEach(e => {
         const ofi = oficiantes.find(o => String(o.id) === String(e.id_oficiante));
+        // IMPORTANTE: Garantir que a string de data não sofra shift de fuso horário
         calendar.addEvent({
             title: e.nome_oficiante,
             start: e.data, 
@@ -238,16 +249,16 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Escala: Cadastro e Edição
+ * Escala: Cadastro e Edição (Correção de Data)
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
     const ofiSelect = document.getElementById('escala-oficiante');
     const turno = document.getElementById('escala-turno').value;
     const setor = document.getElementById('escala-setor').value;
+    const inputData = document.getElementById('escala-data').value;
     const isEdit = document.getElementById('escala-id-original')?.value !== "";
 
-    // Lógica de Horas: Se for recepção, pode usar campos manuais, se não, usa o padrão do turno
     let hInicio = document.getElementById('escala-hora-inicio')?.value;
     let hFim = document.getElementById('escala-hora-fim')?.value;
     
@@ -259,14 +270,13 @@ document.getElementById('form-escala').onsubmit = async (e) => {
 
     const payload = {
         action: isEdit ? "updateEscala" : "addEscala",
-        data: document.getElementById('escala-data').value, // Formato YYYY-MM-DD
+        data: inputData, // Enviamos a string pura YYYY-MM-DD
         id_oficiante: ofiSelect.value,
         nome_oficiante: ofiSelect.options[ofiSelect.selectedIndex].text,
         setor: setor,
         turno: turno,
         hora_inicio: hInicio,
         hora_fim: hFim,
-        // Campos para identificar o registro na edição (conforme sua lógica de BD)
         id_original: document.getElementById('escala-id-original')?.value,
         data_original: document.getElementById('escala-data-original')?.value,
         turno_original: document.getElementById('escala-turno-original')?.value
@@ -282,7 +292,7 @@ document.getElementById('form-escala').onsubmit = async (e) => {
 };
 
 /**
- * Renderização e Helpers
+ * Renderização de Tabelas e Oficiantes
  */
 function renderOficiantes() {
     const container = document.getElementById('oficiantes-list');
@@ -290,16 +300,16 @@ function renderOficiantes() {
     container.innerHTML = oficiantes.map(o => `
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
             <div class="flex -space-x-3">
-                <img src="${o.foto1 || ''}" class="w-10 h-10 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
-                <img src="${o.foto2 || ''}" class="w-10 h-10 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
+                <img src="${o.foto1 || ''}" class="w-12 h-12 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
+                <img src="${o.foto2 || ''}" class="w-12 h-12 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
             </div>
             <div class="flex-1 min-w-0">
                 <p class="font-bold text-slate-800 truncate text-sm">${o.nome}</p>
-                <p class="text-[9px] text-slate-400 font-mono">ID: ${o.id}</p>
+                <p class="text-[9px] text-slate-400 font-mono uppercase">ID: ${o.id}</p>
             </div>
             <div class="flex gap-1">
-                <button onclick="editOficiante('${o.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                <button onclick="deleteOficiante('${o.id}')" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
         </div>
     `).join('');
@@ -311,11 +321,10 @@ function renderEscalaTable() {
     if (!tbody) return;
     const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-    // Ordenar escala por data para a tabela
-    const escalaOrdenada = [...escala].sort((a,b) => new Date(a.data) - new Date(b.data));
+    const escalaOrdenada = [...escala].sort((a,b) => new Date(a.data + 'T12:00:00') - new Date(b.data + 'T12:00:00'));
 
     tbody.innerHTML = escalaOrdenada.map(e => {
-        // Correção de Data: Adicionando hora local para evitar "dia anterior"
+        // Correção Crucial: O Date precisa da hora do almoço para não pular dia no fuso
         const d = new Date(e.data + 'T12:00:00');
         return `
             <tr class="border-b hover:bg-slate-50 transition">
@@ -327,13 +336,13 @@ function renderEscalaTable() {
                     <span class="px-2 py-1 rounded text-[10px] font-black uppercase bg-slate-100 text-slate-600">
                         ${e.setor} - ${e.turno}
                     </span>
-                    <div class="text-[9px] text-slate-400">${e.hora_inicio} às ${e.hora_fim}</div>
+                    <div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio} às ${e.hora_fim}</div>
                 </td>
                 <td class="p-4 text-right flex gap-2 justify-end">
-                    <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-50 p-1 rounded">
+                    <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition">
                         <i data-lucide="edit" class="w-4 h-4"></i>
                     </button>
-                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-1 rounded">
+                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </td>
@@ -353,26 +362,24 @@ function editEscalaItem(item) {
     document.getElementById('escala-setor').value = item.setor;
     document.getElementById('escala-turno').value = item.turno;
     
-    // Armazenar valores originais para a query de update no Google Script
     document.getElementById('escala-id-original').value = item.id_oficiante;
     document.getElementById('escala-data-original').value = item.data;
     document.getElementById('escala-turno-original').value = item.turno;
 
-    // Disparar evento de mudança para mostrar horas se for recepção
     document.getElementById('escala-setor').dispatchEvent(new Event('change'));
     if(item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
     if(item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
 }
 
 async function deleteEscalaItem(id, data, turno) {
-    if (confirm("Remover este item da escala?")) {
+    if (confirm("Deseja realmente remover este item da escala?")) {
         const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
         if (res.status === "ok") fetchData();
     }
 }
 
 async function deleteOficiante(id) {
-    if (confirm("Excluir oficiante?")) {
+    if (confirm("Excluir cadastro do oficiante?")) {
         const res = await apiCall({ action: "deleteOficiante", id });
         if (res.status === "ok") fetchData();
     }
@@ -387,7 +394,7 @@ function editOficiante(id) {
 }
 
 /**
- * UI Modais e Tabs
+ * UI e Helpers
  */
 function switchTab(tab) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
@@ -397,7 +404,7 @@ function switchTab(tab) {
         b.classList.add('border-transparent', 'text-slate-500');
     });
     document.getElementById(`tab-${tab}`)?.classList.add('border-blue-600', 'text-blue-600');
-    if (tab === 'calendar' && calendar) setTimeout(() => calendar.updateSize(), 100);
+    if (tab === 'calendar' && calendar) setTimeout(() => calendar.updateSize(), 150);
 }
 
 function updateOficianteSelect() {
@@ -405,7 +412,8 @@ function updateOficianteSelect() {
     selects.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.innerHTML = (id.includes('filter') ? '<option value="">Todos</option>' : '<option value="">Selecione...</option>') + 
+        const isFilter = id.includes('filter');
+        el.innerHTML = (isFilter ? '<option value="">Todos Oficiantes</option>' : '<option value="">Selecione...</option>') + 
             oficiantes.map(o => `<option value="${o.id}">${o.nome}</option>`).join('');
     });
 }
@@ -418,7 +426,7 @@ function openOficianteModal() {
 
 function openEscalaModal() {
     document.getElementById('form-escala').reset();
-    document.getElementById('escala-id-original').value = ''; // Reset do modo edição
+    document.getElementById('escala-id-original').value = '';
     document.getElementById('modal-escala').style.display = 'flex';
 }
 
@@ -426,19 +434,43 @@ function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
 
 /**
- * Exportação PDF e Auth (Mantidos)
+ * Exportação em PDF (Datas Corrigidas e Limpas)
  */
 function generateProfessionalPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const agora = new Date();
+    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    
     doc.setFontSize(18);
-    doc.text("Escala de Oficiantes", 15, 20);
-    const rows = escala.sort((a,b) => new Date(a.data) - new Date(b.data)).map(e => [e.data, e.nome_oficiante, e.setor, e.turno]);
-    doc.autoTable({ head: [['Data', 'Oficiante', 'Setor', 'Turno']], body: rows, startY: 30 });
-    doc.save(`escala_${agora.getTime()}.pdf`);
+    doc.text("Escala Oficial do Templo", 15, 20);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Relatório extraído em: ${agora.toLocaleDateString('pt-br')} ${agora.getHours()}:${agora.getMinutes()}`, 15, 27);
+
+    // Ordenação e formatação limpa das datas
+    const rows = escala.sort((a,b) => new Date(a.data + 'T12:00:00') - new Date(b.data + 'T12:00:00')).map(e => {
+        const d = new Date(e.data + 'T12:00:00');
+        const dataFormatada = `${d.toLocaleDateString('pt-br')} (${diasSemana[d.getDay()]})`;
+        return [dataFormatada, e.nome_oficiante, e.setor, `${e.turno} (${e.hora_inicio}-${e.hora_fim})` ];
+    });
+
+    doc.autoTable({ 
+        head: [['Data', 'Oficiante', 'Setor', 'Turno/Horário']], 
+        body: rows, 
+        startY: 35,
+        theme: 'striped',
+        headStyles: { fillColor: [30, 41, 59] },
+        styles: { fontSize: 8, cellPadding: 3 }
+    });
+    
+    doc.save(`Escala_Templo_${agora.toISOString().split('T')[0]}.pdf`);
 }
 
+/**
+ * Auth
+ */
 function handleCredentialResponse(response) {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
     currentUser = payload;
