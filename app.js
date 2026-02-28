@@ -97,7 +97,7 @@ async function uploadParaCloudinary(file) {
 }
 
 /**
- * Configuração do FullCalendar (Correção de Tradução e Exibição)
+ * Configuração do FullCalendar
  */
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -107,7 +107,7 @@ function initCalendar() {
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         locale: 'pt-br',
         height: 'auto',
-        timeZone: 'UTC', // Força UTC para evitar alteração de fuso horário nas datas puras
+        timeZone: 'UTC',
         buttonText: {
             today: 'Hoje',
             month: 'Mês',
@@ -120,7 +120,7 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth,listWeek'
         },
-        allDayText: 'Dia Todo', // Remove "all-day"
+        allDayText: 'Dia Todo',
         eventContent: function(arg) {
             const ext = arg.event.extendedProps;
             const setor = (ext.setor || "").toUpperCase();
@@ -255,7 +255,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Escala: Cadastro e Edição (Diferenciação ADD/UPDATE corrigida)
+ * Escala: Cadastro e Edição
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
@@ -264,7 +264,6 @@ document.getElementById('form-escala').onsubmit = async (e) => {
     const setor = document.getElementById('escala-setor').value;
     const inputData = document.getElementById('escala-data').value;
     
-    // Verificação de ID original e data original para garantir o UPDATE correto no Google Sheets
     const idOrig = document.getElementById('escala-id-original').value;
     const dataOrig = document.getElementById('escala-data-original').value;
     const isEdit = idOrig !== "" && dataOrig !== "";
@@ -309,15 +308,15 @@ function renderEscalaTable() {
     if (!tbody) return;
     const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
-    // Ordenação robusta por data (string YYYY-MM-DD)
     const escalaOrdenada = [...escala].sort((a,b) => a.data.localeCompare(b.data));
 
     tbody.innerHTML = escalaOrdenada.map(e => {
-        const parts = e.data.split('-');
-        const d = new Date(parts[0], parts[1] - 1, parts[2]); // Cria data local
+        const cleanData = e.data.includes('T') ? e.data.split('T')[0] : e.data;
+        const parts = cleanData.split('-');
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
         
         const isRecepcao = e.setor.toUpperCase() === 'RECEPÇÃO';
-        const horarioInfo = isRecepcao ? `<div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio} às ${e.hora_fim}</div>` : '';
+        const horarioInfo = isRecepcao ? `<div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio || ''} às ${e.hora_fim || ''}</div>` : '';
 
         return `
             <tr class="border-b hover:bg-slate-50 transition">
@@ -335,7 +334,7 @@ function renderEscalaTable() {
                     <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition">
                         <i data-lucide="edit" class="w-4 h-4"></i>
                     </button>
-                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition">
+                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${cleanData}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </td>
@@ -372,23 +371,21 @@ function renderOficiantes() {
  */
 function editEscalaItem(item) {
     openEscalaModal();
-    // Preenchimento dos campos visíveis
+    const cleanData = item.data.includes('T') ? item.data.split('T')[0] : item.data;
+    
     document.getElementById('escala-oficiante').value = item.id_oficiante;
-    document.getElementById('escala-data').value = item.data;
+    document.getElementById('escala-data').value = cleanData;
     document.getElementById('escala-setor').value = item.setor;
     document.getElementById('escala-turno').value = item.turno;
     
-    // Preenchimento dos campos de controlo para o UPDATE
     document.getElementById('escala-id-original').value = item.id_oficiante;
-    document.getElementById('escala-data-original').value = item.data;
+    document.getElementById('escala-data-original').value = cleanData;
     document.getElementById('escala-turno-original').value = item.turno;
 
-    // Trigger visual para campos de hora
     document.getElementById('escala-setor').dispatchEvent(new Event('change'));
     if(item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
     if(item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
     
-    // Altera o texto do botão para indicar edição
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Alterar Registo";
 }
@@ -452,18 +449,18 @@ function openOficianteModal() {
 }
 
 function openEscalaModal() {
-    // Limpeza completa do formulário e dos campos ocultos de controlo
     const form = document.getElementById('form-escala');
     if (form) form.reset();
     
-    document.getElementById('escala-id-original').value = '';
-    document.getElementById('escala-data-original').value = '';
-    document.getElementById('escala-turno-original').value = '';
+    // Limpeza de campos ocultos (Crucial para o botão "Adicionar" funcionar)
+    const fieldsToClear = ['escala-id-original', 'escala-data-original', 'escala-turno-original'];
+    fieldsToClear.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+    });
     
-    // Reset visual dos campos de horas (garante que ficam ocultos se não for Recepção)
     document.getElementById('escala-setor').dispatchEvent(new Event('change'));
     
-    // Reset do texto do botão para o padrão de inserção
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Adicionar à Escala";
     
@@ -474,13 +471,13 @@ function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
 
 /**
- * Exportação em PDF
+ * Exportação em PDF (Corrigida e Profissional)
  */
 function generateProfessionalPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const agora = new Date();
-    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const diasSemanaRelatorio = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     
     doc.setFontSize(18);
     doc.text("Escala Oficial do Templo", 15, 20);
@@ -490,10 +487,15 @@ function generateProfessionalPDF() {
     doc.text(`Relatório extraído em: ${agora.toLocaleDateString('pt-br')} ${agora.getHours()}:${agora.getMinutes()}`, 15, 27);
 
     const rows = escala.sort((a,b) => a.data.localeCompare(b.data)).map(e => {
-        const parts = e.data.split('-');
+        // Limpeza da string de data para evitar T03:00...
+        const cleanDataStr = e.data.includes('T') ? e.data.split('T')[0] : e.data;
+        const parts = cleanDataStr.split('-');
         const d = new Date(parts[0], parts[1]-1, parts[2]);
-        const dataFormatada = `${parts[2]}/${parts[1]}/${parts[0]} (${diasSemana[d.getDay()]})`;
-        return [dataFormatada, e.nome_oficiante, e.setor, `${e.turno} (${e.hora_inicio}-${e.hora_fim})` ];
+        
+        const dataFormatada = `${parts[2]}/${parts[1]}/${parts[0]} (${diasSemanaRelatorio[d.getDay()] || 'N/A'})`;
+        const horarioDisplay = e.setor.toUpperCase() === 'RECEPÇÃO' ? `${e.hora_inicio || '00:00'}-${e.hora_fim || '00:00'}` : e.turno;
+
+        return [dataFormatada, e.nome_oficiante, e.setor, horarioDisplay];
     });
 
     doc.autoTable({ 
@@ -502,7 +504,13 @@ function generateProfessionalPDF() {
         startY: 35,
         theme: 'striped',
         headStyles: { fillColor: [30, 41, 59] },
-        styles: { fontSize: 8, cellPadding: 3 }
+        styles: { fontSize: 8, cellPadding: 3 },
+        columnStyles: {
+            0: { cellWidth: 45 },
+            1: { cellWidth: 60 },
+            2: { cellWidth: 40 },
+            3: { cellWidth: 40 }
+        }
     });
     
     doc.save(`Escala_Templo_${agora.toISOString().split('T')[0]}.pdf`);
