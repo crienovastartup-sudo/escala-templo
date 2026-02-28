@@ -94,12 +94,17 @@ function initCalendar() {
             else if (setorNorm.includes("recepcao")) colorClass = "card-recepcao";
             else if (setorNorm.includes("selamento")) colorClass = "card-selamento";
 
+            // Correção de Contraste: Forçando cores escuras no texto para visibilidade
             let html = `
-                <div class="event-card-custom ${colorClass}">
-                    <div class="flex flex-col h-full justify-between">
+                <div class="event-card-custom ${colorClass}" style="color: #1e293b; border-left: 4px solid currentColor;">
+                    <div class="flex flex-col h-full justify-between p-1">
                         <div>
-                            <span class="card-title truncate">${arg.event.title}</span>
-                            <span class="card-subtitle">${ext.turno} - ${ext.setor}</span>
+                            <span class="card-title truncate" style="display: block; font-weight: 800; font-size: 11px; line-height: 1.1; color: #0f172a;">
+                                ${arg.event.title}
+                            </span>
+                            <span class="card-subtitle" style="display: block; font-size: 9px; opacity: 0.8; font-weight: 600; color: #334155;">
+                                ${ext.turno} - ${ext.setor}
+                            </span>
                         </div>
                         <div class="flex -space-x-2 mt-1 self-end">
                             ${ext.foto1 ? `<img src="${ext.foto1}" class="w-5 h-5 rounded-full border border-white object-cover shadow-sm">` : ''}
