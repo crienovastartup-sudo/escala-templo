@@ -132,6 +132,7 @@ async function fetchData() {
  */
 async function uploadParaCloudinary(file) {
     const cloudName = "dwlrxb6a0"; 
+    // Certifique-se de que este preset está configurado como 'Unsigned' no painel do Cloudinary
     const unsignedUploadPreset = "ml_default"; 
     
     const formData = new FormData();
@@ -147,15 +148,20 @@ async function uploadParaCloudinary(file) {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("Cloudinary Error Details:", data);
-            // Lança erro específico para ajudar no diagnóstico
-            throw new Error(data.error ? data.error.message : "Erro desconhecido no Cloudinary");
+            console.group("Erro no Cloudinary");
+            console.error("Status:", response.status);
+            console.error("Detalhes:", data);
+            console.groupEnd();
+            
+            // Lança erro detalhado
+            let msg = data.error ? data.error.message : "Erro desconhecido";
+            throw new Error(`Cloudinary diz: ${msg}`);
         }
         
         return data.secure_url || ""; 
     } catch (error) {
         console.error("Falha no upload Cloudinary:", error);
-        throw error; // Re-lança para ser capturado pelo onsubmit
+        throw error;
     }
 }
 
@@ -180,34 +186,31 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
         const input2 = document.getElementById('fotoInput2');
         
         if (!input1 || !input2) {
-            throw new Error("Inputs de foto não encontrados no HTML (IDs fotoInput1/2).");
+            throw new Error("Inputs de foto não encontrados.");
         }
 
         const file1 = input1.files[0];
         const file2 = input2.files[0];
         
-        // Mantém fotos existentes se for edição e não houver novo arquivo selecionado
         const ori = id ? oficiantes.find(o => String(o.id) === String(id)) : null;
         let url1 = ori ? ori.foto1 : "";
         let url2 = ori ? ori.foto2 : "";
 
-        // Tenta upload da Foto 1
+        // Foto 1
         if (file1) {
             try {
-                const uploadedUrl = await uploadParaCloudinary(file1);
-                if (uploadedUrl) url1 = uploadedUrl;
+                url1 = await uploadParaCloudinary(file1);
             } catch (err) {
-                throw new Error("Erro ao processar Foto 1 no servidor de imagens: " + err.message);
+                throw new Error("Erro na Foto 1: " + err.message);
             }
         }
 
-        // Tenta upload da Foto 2
+        // Foto 2
         if (file2) {
             try {
-                const uploadedUrl = await uploadParaCloudinary(file2);
-                if (uploadedUrl) url2 = uploadedUrl;
+                url2 = await uploadParaCloudinary(file2);
             } catch (err) {
-                throw new Error("Erro ao processar Foto 2 no servidor de imagens: " + err.message);
+                throw new Error("Erro na Foto 2: " + err.message);
             }
         }
 
@@ -219,19 +222,19 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
             foto2: url2
         };
 
-        if (btnSalvar) btnSalvar.innerText = "Gravando na Planilha...";
+        if (btnSalvar) btnSalvar.innerText = "Gravando dados...";
         const res = await apiCall(payload);
 
         if (res.status === "ok") { 
             closeModal('modal-oficiante'); 
             fetchData(); 
             e.target.reset();
-            alert("Sucesso ao salvar!");
+            alert("Salvo com sucesso!");
         } else {
-            alert("Erro na Planilha: " + res.message);
+            alert("Erro no servidor: " + res.message);
         }
     } catch (err) {
-        console.error("Erro no fluxo completo:", err);
+        console.error("Erro fatal:", err);
         alert(err.message);
     } finally {
         if (btnSalvar) {
