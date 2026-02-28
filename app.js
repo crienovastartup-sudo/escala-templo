@@ -263,47 +263,10 @@ function updateOficianteSelect() {
         oficiantes.map(o => `<option value="${o.id}">${o.nome}</option>`).join('');
 }
 
-// --- Form Handlers ---
-// 3. SUA FUNÇÃO ONSUBMIT ATUALIZADA (Copie e substitua a sua por esta):
-document.getElementById('form-oficiante').onsubmit = async (e) => {
-    e.preventDefault();
-    
-    // Captura os arquivos dos novos inputs de arquivo
-    const file1 = document.getElementById('fotoInput1').files[0];
-    const file2 = document.getElementById('fotoInput2').files[0];
-    
-    // Se quiser mostrar um "Carregando..." aqui seria o momento
-    console.log("Iniciando upload de imagens...");
-
-    // Realiza os uploads e obtém os links (URLs)
-    const url1 = file1 ? await uploadParaCloudinary(file1) : "";
-    const url2 = file2 ? await uploadParaCloudinary(file2) : "";
-
-    const id = document.getElementById('oficiante-id').value;
-    
-    const payload = {
-        action: id ? "updateOficiante" : "addOficiante",
-        id: id,
-        nome: document.getElementById('oficiante-nome').value,
-        // Se o upload falhou ou não houve arquivo, mantemos vazio ou tratamos conforme sua regra
-        foto1: url1, 
-        foto2: url2
-    };
-
-    const res = await apiCall(payload);
-    if (res.status === "ok") { 
-        closeModal('modal-oficiante'); 
-        fetchData(); 
-        e.target.reset(); // Limpa o formulário e os arquivos selecionados
-    } else {
-        alert(res.message);
-    }
-};
-
+// 2. FUNÇÃO AUXILIAR DE UPLOAD (MANTIDA E MELHORADA)
 async function uploadParaCloudinary(file) {
-    // DADOS EXTRAÍDOS DA SUA IMAGEM:
-    const cloudName = "dwlrxb6a0"; // Este é o seu Cloud Name visível na imagem
-    const unsignedUploadPreset = "ml_default"; // SUGESTÃO: O Cloudinary cria um chamado 'ml_default' por padrão.
+    const cloudName = "dwlrxb6a0"; 
+    const unsignedUploadPreset = "ml_default"; // GARANTA que este preset é 'Unsigned' nas definições do Cloudinary
     
     const formData = new FormData();
     formData.append("file", file);
@@ -314,19 +277,87 @@ async function uploadParaCloudinary(file) {
             method: "POST",
             body: formData
         });
-        const data = await response.json();
         
-        if (data.error) {
-            console.error("Erro do Cloudinary:", data.error.message);
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Erro detalhado Cloudinary:", errorData);
             return null;
         }
-        
-        return data.secure_url; 
+
+        const data = await response.json();
+        return data.secure_url || ""; 
     } catch (error) {
-        console.error("Erro na ligação ao Cloudinary:", error);
+        console.error("Erro de rede/ligação no upload:", error);
         return null;
     }
 }
+
+
+// --- Form Handlers ---
+// 3. SUA FUNÇÃO ONSUBMIT CORRIGIDA
+document.getElementById('form-oficiante').onsubmit = async (e) => {
+    e.preventDefault();
+    
+    // Feedback visual imediato para o utilizador
+    const btnSalvar = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = btnSalvar ? btnSalvar.innerText : "Salvar";
+    if (btnSalvar) {
+        btnSalvar.disabled = true;
+        btnSalvar.innerText = "A enviar fotos...";
+    }
+
+    try {
+        // Captura os ficheiros
+        const file1 = document.getElementById('fotoInput1')?.files[0];
+        const file2 = document.getElementById('fotoInput2')?.files[0];
+        
+        let url1 = "";
+        let url2 = "";
+
+        // Só faz upload se o ficheiro existir, caso contrário mantém vazio
+        if (file1) {
+            url1 = await uploadParaCloudinary(file1);
+            if (!url1) throw new Error("Falha ao carregar a Foto 1.");
+        }
+
+        if (file2) {
+            url2 = await uploadParaCloudinary(file2);
+        }
+
+        const id = document.getElementById('oficiante-id').value;
+        
+        const payload = {
+            action: id ? "updateOficiante" : "addOficiante",
+            id: id,
+            nome: document.getElementById('oficiante-nome').value,
+            foto1: url1, 
+            foto2: url2
+        };
+
+        console.log("A enviar payload para API:", payload);
+
+        const res = await apiCall(payload);
+        
+        if (res && res.status === "ok") { 
+            closeModal('modal-oficiante'); 
+            fetchData(); 
+            e.target.reset();
+            alert("Oficiante guardado com sucesso!");
+        } else {
+            alert("Erro na API: " + (res?.message || "Resposta desconhecida"));
+        }
+
+    } catch (error) {
+        console.error("Erro no processo de salvamento:", error);
+        alert("Ocorreu um erro: " + error.message);
+    } finally {
+        // Devolve o estado original do botão
+        if (btnSalvar) {
+            btnSalvar.disabled = false;
+            btnSalvar.innerText = originalBtnText;
+        }
+    }
+};
 
 
 document.getElementById('form-escala').onsubmit = async (e) => {
@@ -367,6 +398,7 @@ function editOficiante(id) {
     document.getElementById('oficiante-url1').value = o.foto1;
     document.getElementById('oficiante-url2').value = o.foto2;
 }
+
 
 
 
