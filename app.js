@@ -219,7 +219,7 @@ function updateCalendar() {
 }
 
 function getSetorClass(setor) {
-    if (setor === 'Batisterio') return 'bg-batisterio';
+    if (setor === 'Batistério') return 'bg-batisterio';
     if (setor === 'Recepção') return 'bg-recepcao';
     if (setor === 'Selamento') return 'bg-selamento';
     return 'bg-slate-100';
@@ -317,3 +317,4 @@ function editOficiante(id) {
     document.getElementById('oficiante-url1').value = o.foto1;
     document.getElementById('oficiante-url2').value = o.foto2;
 }
+
