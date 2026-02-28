@@ -279,6 +279,61 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
     else alert(res.message);
 };
 
+async function uploadParaCloudinary(file) {
+    // DADOS EXTRAÍDOS DA SUA IMAGEM:
+    const cloudName = "dwlrxb6a0"; // Este é o seu Cloud Name visível na imagem
+    const unsignedUploadPreset = "ml_default"; // SUGESTÃO: O Cloudinary cria um chamado 'ml_default' por padrão.
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", unsignedUploadPreset);
+
+    try {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error("Erro do Cloudinary:", data.error.message);
+            return null;
+        }
+        
+        return data.secure_url; 
+    } catch (error) {
+        console.error("Erro na ligação ao Cloudinary:", error);
+        return null;
+    }
+}
+
+async function handleSalvarOficiante(event) {
+    event.preventDefault();
+    
+    const file1 = document.getElementById('fotoInput1').files[0];
+    const file2 = document.getElementById('fotoInput2').files[0];
+    
+    let urlFoto1 = "";
+    let urlFoto2 = "";
+
+    if (file1) {
+        urlFoto1 = await uploadParaCloudinary(file1);
+    }
+
+    if (file2) {
+        urlFoto2 = await uploadParaCloudinary(file2);
+    }
+
+    const dadosOficiante = {
+        nome: document.getElementById('oficiante-nome').value,
+        funcao: document.getElementById('oficiante-funcao').value,
+        url1: urlFoto1, 
+        url2: urlFoto2
+    };
+
+    console.log("Dados prontos para gravar:", dadosOficiante);
+}
+
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
     const ofiSelect = document.getElementById('escala-oficiante');
@@ -317,4 +372,5 @@ function editOficiante(id) {
     document.getElementById('oficiante-url1').value = o.foto1;
     document.getElementById('oficiante-url2').value = o.foto2;
 }
+
 
