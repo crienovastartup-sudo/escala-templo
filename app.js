@@ -307,27 +307,29 @@ document.getElementById('form-escala').onsubmit = async (e) => {
 function renderEscalaTable() {
     const tbody = document.getElementById('escala-table-body');
     if (!tbody) return;
-    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
     // Ordenação robusta por data (string YYYY-MM-DD)
     const escalaOrdenada = [...escala].sort((a,b) => a.data.localeCompare(b.data));
 
     tbody.innerHTML = escalaOrdenada.map(e => {
         const parts = e.data.split('-');
-        const d = new Date(parts[0], parts[1] - 1, parts[2]); // Cria data local sem shift
+        const d = new Date(parts[0], parts[1] - 1, parts[2]); // Cria data local
         
+        const isRecepcao = e.setor.toUpperCase() === 'RECEPÇÃO';
+        const horarioInfo = isRecepcao ? `<div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio} às ${e.hora_fim}</div>` : '';
+
         return `
             <tr class="border-b hover:bg-slate-50 transition">
                 <td class="p-4 text-sm font-medium text-slate-700">
-                    <div class="font-bold">${parts[2]}/${parts[1]}/${parts[0]}</div>
-                    <div class="text-[10px] text-slate-400 uppercase">${diasSemana[d.getDay()]}</div>
+                    <div class="font-bold">${parts[2]}/${parts[1]}/${parts[0]} - ${diasSemana[d.getDay()]}</div>
                 </td>
                 <td class="p-4 font-bold text-slate-900">${e.nome_oficiante}</td>
                 <td class="p-4">
                     <span class="px-2 py-1 rounded text-[10px] font-black uppercase bg-slate-100 text-slate-600">
                         ${e.setor} - ${e.turno}
                     </span>
-                    <div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio} às ${e.hora_fim}</div>
+                    ${horarioInfo}
                 </td>
                 <td class="p-4 text-right flex gap-2 justify-end">
                     <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition">
