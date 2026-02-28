@@ -334,8 +334,8 @@ function renderEscalaTable() {
                     ${horarioInfo}
                 </td>
                 <td class="p-4 text-right">
-                    <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 mr-2 hover:underline">Editar</button>
-                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-red-400 hover:underline">Remover</button>
+                    <button onclick='window.editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 mr-2 hover:underline">Editar</button>
+                    <button onclick="window.deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-red-400 hover:underline">Remover</button>
                 </td>
             </tr>
         `;
@@ -352,33 +352,28 @@ function renderOficiantes() {
                 <p class="font-bold text-sm">${o.nome}</p>
             </div>
             <div class="flex gap-2">
-                <button onclick="editOficiante('${o.id}')" class="text-blue-600 hover:underline">Edit</button>
-                <button onclick="deleteOficiante('${o.id}')" class="text-red-500 hover:underline">Apagar</button>
+                <button onclick="window.editOficiante('${o.id}')" class="text-blue-600 hover:underline">Edit</button>
+                <button onclick="window.deleteOficiante('${o.id}')" class="text-red-500 hover:underline">Apagar</button>
             </div>
         </div>
     `).join('');
 }
 
 /**
- * Gestão de Modais com Verificações de Segurança
+ * Gestão de Modais (Expostas Globalmente para os Botões Funcionarem)
  */
-function openEscalaModal() {
+window.openEscalaModal = function() {
     const modal = document.getElementById('modal-escala');
-    if (!modal) {
-        console.error("Modal de escala não encontrado no HTML.");
-        return;
-    }
+    if (!modal) return;
 
     const form = document.getElementById('form-escala');
     if (form) form.reset();
     
-    // Resetar campos ocultos de edição
     ['escala-id-original', 'escala-data-original', 'escala-turno-original'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
     
-    // Esconder campos de horas extras se existirem
     const hourContainer = document.getElementById('escala-horas-container');
     if (hourContainer) hourContainer.classList.add('hidden');
     
@@ -386,10 +381,10 @@ function openEscalaModal() {
     if (submitBtn) submitBtn.innerText = "Adicionar à Escala";
     
     modal.style.display = 'flex';
-}
+};
 
-function editEscalaItem(item) {
-    openEscalaModal();
+window.editEscalaItem = function(item) {
+    window.openEscalaModal();
     const cleanData = item.data.includes('T') ? item.data.split('T')[0] : item.data;
     
     const map = {
@@ -409,27 +404,26 @@ function editEscalaItem(item) {
         if (el) el.value = map[id];
     });
 
-    // Disparar evento de mudança no setor para mostrar/esconder campos de hora
     const setorSelect = document.getElementById('escala-setor');
     if (setorSelect) setorSelect.dispatchEvent(new Event('change'));
     
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Alterar Registo";
-}
+};
 
-function openOficianteModal() {
+window.openOficianteModal = function() {
     const m = document.getElementById('modal-oficiante');
     const f = document.getElementById('form-oficiante');
     if(f) f.reset();
     const idField = document.getElementById('oficiante-id');
     if(idField) idField.value = '';
     if(m) m.style.display = 'flex';
-}
+};
 
-function closeModal(id) { 
+window.closeModal = function(id) { 
     const m = document.getElementById(id);
     if(m) m.style.display = 'none'; 
-}
+};
 
 function showLoading(show) { 
     const l = document.getElementById('loading');
@@ -437,42 +431,42 @@ function showLoading(show) {
 }
 
 /**
- * Ações de Exclusão e Edição de Oficiante
+ * Ações de Exclusão e Edição (Expostas Globalmente)
  */
-async function deleteEscalaItem(id, data, turno) {
+window.deleteEscalaItem = async function(id, data, turno) {
     if (confirm("Tens a certeza que desejas remover este item da escala?")) {
         const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
         if (res?.status === "ok") fetchData();
     }
-}
+};
 
-async function deleteOficiante(id) {
+window.deleteOficiante = async function(id) {
     if (confirm("Desejas excluir permanentemente este oficiante?")) {
         const res = await apiCall({ action: "deleteOficiante", id });
         if (res?.status === "ok") fetchData();
     }
-}
+};
 
-function editOficiante(id) {
+window.editOficiante = function(id) {
     const o = oficiantes.find(of => String(of.id) === String(id));
     if (!o) return;
-    openOficianteModal();
+    window.openOficianteModal();
     const idF = document.getElementById('oficiante-id');
     const nomF = document.getElementById('oficiante-nome');
     if(idF) idF.value = o.id;
     if(nomF) nomF.value = o.nome;
-}
+};
 
 /**
- * Navegação por Abas
+ * Navegação por Abas (Exposta Globalmente)
  */
-function switchTab(tab) {
+window.switchTab = function(tab) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     document.getElementById(`sec-${tab}`)?.classList.remove('hidden');
     if (tab === 'calendar' && calendar) {
         setTimeout(() => { calendar.updateSize(); }, 200);
     }
-}
+};
 
 /**
  * Atualização Dinâmica de Dropdowns
@@ -488,9 +482,9 @@ function updateOficianteSelect() {
 }
 
 /**
- * Exportação para PDF (jsPDF + AutoTable)
+ * Exportação para PDF (jsPDF + AutoTable) - Exposta Globalmente
  */
-function generateProfessionalPDF() {
+window.generateProfessionalPDF = function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
@@ -513,12 +507,12 @@ function generateProfessionalPDF() {
     });
     
     doc.save("Escala_Templo.pdf");
-}
+};
 
 /**
- * Google Auth Callback
+ * Google Auth Callback (Exposta Globalmente)
  */
-function handleCredentialResponse(response) {
+window.handleCredentialResponse = function(response) {
     try {
         const payload = JSON.parse(atob(response.credential.split('.')[1]));
         currentUser = payload;
@@ -532,4 +526,4 @@ function handleCredentialResponse(response) {
     } catch (err) {
         console.error("Erro ao processar login Google:", err);
     }
-}
+};
