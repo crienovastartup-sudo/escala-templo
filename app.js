@@ -66,7 +66,7 @@ async function apiCall(data) {
             if (retries === 0) {
                 showLoading(false);
                 console.error("Erro final na API após retentativas:", e);
-                return { status: "error", message: "Falha na comunicação com o servidor. Verifique sua conexão." };
+                return { status: "error", message: "Falha na comunicação com o servidor. Verifique sua ligação." };
             }
             await new Promise(resolve => setTimeout(resolve, delay));
             delay *= 2;
@@ -107,7 +107,7 @@ function initCalendar() {
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         locale: 'pt-br',
         height: 'auto',
-        timeZone: 'UTC', // Força UTC para evitar shift de fuso horário nas datas puras
+        timeZone: 'UTC', // Força UTC para evitar alteração de fuso horário nas datas puras
         buttonText: {
             today: 'Hoje',
             month: 'Mês',
@@ -221,7 +221,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
     const btn = e.target.querySelector('button[type="submit"]');
     const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = "Salvando...";
+    btn.innerText = "A guardar...";
 
     try {
         const id = document.getElementById('oficiante-id').value;
@@ -255,7 +255,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Escala: Cadastro e Edição (Botão Adicionar/Alterar Corrigido)
+ * Escala: Cadastro e Edição (Diferenciação ADD/UPDATE corrigida)
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
@@ -264,9 +264,10 @@ document.getElementById('form-escala').onsubmit = async (e) => {
     const setor = document.getElementById('escala-setor').value;
     const inputData = document.getElementById('escala-data').value;
     
-    // Verificação de ID original para diferenciar ADD de UPDATE
+    // Verificação de ID original e data original para garantir o UPDATE correto no Google Sheets
     const idOrig = document.getElementById('escala-id-original').value;
-    const isEdit = idOrig !== "";
+    const dataOrig = document.getElementById('escala-data-original').value;
+    const isEdit = idOrig !== "" && dataOrig !== "";
 
     let hInicio = document.getElementById('escala-hora-inicio')?.value;
     let hFim = document.getElementById('escala-hora-fim')?.value;
@@ -287,7 +288,7 @@ document.getElementById('form-escala').onsubmit = async (e) => {
         hora_inicio: hInicio,
         hora_fim: hFim,
         id_original: idOrig,
-        data_original: document.getElementById('escala-data-original').value,
+        data_original: dataOrig,
         turno_original: document.getElementById('escala-turno-original').value
     };
 
@@ -296,7 +297,7 @@ document.getElementById('form-escala').onsubmit = async (e) => {
         closeModal('modal-escala'); 
         fetchData(); 
     } else {
-        alert("Erro ao salvar escala: " + res.message);
+        alert("Erro ao guardar escala: " + res.message);
     }
 };
 
@@ -375,7 +376,7 @@ function editEscalaItem(item) {
     document.getElementById('escala-setor').value = item.setor;
     document.getElementById('escala-turno').value = item.turno;
     
-    // Preenchimento dos IDs de controle para o UPDATE
+    // Preenchimento dos campos de controlo para o UPDATE
     document.getElementById('escala-id-original').value = item.id_oficiante;
     document.getElementById('escala-data-original').value = item.data;
     document.getElementById('escala-turno-original').value = item.turno;
@@ -384,6 +385,10 @@ function editEscalaItem(item) {
     document.getElementById('escala-setor').dispatchEvent(new Event('change'));
     if(item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
     if(item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
+    
+    // Altera o texto do botão para indicar edição
+    const submitBtn = document.querySelector('#form-escala button[type="submit"]');
+    if (submitBtn) submitBtn.innerText = "Alterar Registo";
 }
 
 async function deleteEscalaItem(id, data, turno) {
@@ -449,6 +454,11 @@ function openEscalaModal() {
     document.getElementById('escala-id-original').value = '';
     document.getElementById('escala-data-original').value = '';
     document.getElementById('escala-turno-original').value = '';
+    
+    // Reset do texto do botão para o padrão
+    const submitBtn = document.querySelector('#form-escala button[type="submit"]');
+    if (submitBtn) submitBtn.innerText = "Adicionar à Escala";
+    
     document.getElementById('modal-escala').style.display = 'flex';
 }
 
