@@ -8,13 +8,15 @@ const UPLOAD_PRESET = "ml_default";
 const CONFIG_TURNOS = {
     "PRIMEIRO": { inicio: "07:00", fim: "12:00" },
     "SEGUNDO":  { inicio: "12:00", fim: "17:00" },
-    "TERCEIRO": { inicio: "17:00", fim: "21:00" }
+    "TERCEIRO": { inicio: "17:00", fim: "21:00" },
+    "MANHÃ":    { inicio: "07:00", fim: "13:00" },
+    "TARDE":    { inicio: "13:00", fim: "19:00" }
 };
 
-let oficiantes = []; // Lista de objetos dos oficiantes cadastrados
-let escala = [];      // Lista de registros de agendamento na escala
-let calendar;        // Instância global do FullCalendar
-let currentUser = null; // Armazena dados do perfil logado via Google
+let oficiantes = []; 
+let escala = [];      
+let calendar;        
+let currentUser = null; 
 
 /**
  * Inicialização do Sistema
@@ -27,17 +29,15 @@ window.onload = () => {
 };
 
 function setupEventListeners() {
-    // Listener para o setor de recepção
     const setorSelect = document.getElementById('escala-setor');
     if (setorSelect) {
         setorSelect.addEventListener('change', (e) => {
-            const isRecepcao = e.target.value.toLowerCase().includes('recepcao');
+            const isRecepcao = e.target.value.toUpperCase() === 'RECEPÇÃO';
             const hourFields = document.getElementById('escala-horas-container');
             if (hourFields) hourFields.classList.toggle('hidden', !isRecepcao);
         });
     }
 
-    // Listeners para os Filtros do Calendário
     ['filter-setor', 'filter-turno', 'filter-oficiante'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', applyFilters);
@@ -45,21 +45,32 @@ function setupEventListeners() {
 }
 
 /**
- * Chamada Genérica para a API
+ * Chamada Genérica para a API com Retentativas
  */
 async function apiCall(data) {
     showLoading(true);
-    try {
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-        return await res.json();
-    } catch (e) {
-        console.error("Erro na API:", e);
-        return { status: "error", message: "Falha na comunicação com o servidor." };
-    } finally {
-        showLoading(false);
+    let retries = 5;
+    let delay = 1000;
+
+    while (retries > 0) {
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            showLoading(false);
+            return json;
+        } catch (e) {
+            retries--;
+            if (retries === 0) {
+                showLoading(false);
+                console.error("Erro final na API após retentativas:", e);
+                return { status: "error", message: "Falha na comunicação com o servidor. Verifique sua conexão." };
+            }
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+        }
     }
 }
 
@@ -86,7 +97,7 @@ async function uploadParaCloudinary(file) {
 }
 
 /**
- * Configuração do FullCalendar (Foco em Visibilidade e Português)
+ * Configuração do FullCalendar (Correção de Tradução e Exibição)
  */
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -96,6 +107,7 @@ function initCalendar() {
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         locale: 'pt-br',
         height: 'auto',
+        timeZone: 'UTC', // Força UTC para evitar shift de fuso horário nas datas puras
         buttonText: {
             today: 'Hoje',
             month: 'Mês',
@@ -108,38 +120,33 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth,listWeek'
         },
+        allDayText: 'Dia Todo', // Remove "all-day"
         eventContent: function(arg) {
             const ext = arg.event.extendedProps;
-            const setorNorm = (ext.setor || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const setor = (ext.setor || "").toUpperCase();
             let colorClass = "card-default";
             
-            if (setorNorm.includes("batisterio")) colorClass = "card-batisterio";
-            else if (setorNorm.includes("recepcao")) colorClass = "card-recepcao";
-            else if (setorNorm.includes("selamento")) colorClass = "card-selamento";
+            if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
+            else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
+            else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
 
-            // Fotos aumentadas para w-6 h-6 (24px) para melhor visibilidade
             let html = `
-                <div class="event-card-custom ${colorClass}" style="color: #1e293b; border-left: 4px solid currentColor; padding: 6px; overflow: hidden; min-height: 50px;">
-                    <div class="flex flex-col h-full justify-between">
-                        <div>
-                            <span class="card-title" style="display: block; font-weight: 800; font-size: 11px; line-height: 1.2; color: #0f172a; white-space: normal; word-break: break-word;">
-                                ${arg.event.title}
-                            </span>
-                            <span class="card-subtitle" style="display: block; font-size: 9px; opacity: 0.9; font-weight: 700; color: #475569;">
-                                ${ext.turno} - ${ext.setor}
-                            </span>
+                <div class="event-card-custom ${colorClass}" style="border-left: 4px solid currentColor; padding: 4px; min-height: 55px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-weight: 800; font-size: 11px; line-height: 1.1; color: #1e293b; margin-bottom: 2px;">
+                            ${arg.event.title}
                         </div>
-                        <div class="flex -space-x-1.5 mt-2 justify-end">
-                            ${ext.foto1 ? `<img src="${ext.foto1}" class="w-6 h-6 rounded-full border-2 border-white object-cover shadow-md">` : ''}
-                            ${ext.foto2 ? `<img src="${ext.foto2}" class="w-6 h-6 rounded-full border-2 border-white object-cover shadow-md">` : ''}
+                        <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                            ${ext.turno}
                         </div>
+                    </div>
+                    <div class="flex -space-x-2 mt-1 justify-end">
+                        ${ext.foto1 ? `<img src="${ext.foto1}" style="width: 26px; height: 26px; border-radius: 999px; border: 2px solid white; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">` : ''}
+                        ${ext.foto2 ? `<img src="${ext.foto2}" style="width: 26px; height: 26px; border-radius: 999px; border: 2px solid white; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">` : ''}
                     </div>
                 </div>
             `;
             return { html };
-        },
-        windowResize: function() {
-            calendar.changeView(window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth');
         }
     });
     calendar.render();
@@ -165,7 +172,6 @@ function applyFilters() {
 
     filtrados.forEach(e => {
         const ofi = oficiantes.find(o => String(o.id) === String(e.id_oficiante));
-        // IMPORTANTE: Garantir que a string de data não sofra shift de fuso horário
         calendar.addEvent({
             title: e.nome_oficiante,
             start: e.data, 
@@ -215,7 +221,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
     const btn = e.target.querySelector('button[type="submit"]');
     const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = "Processando...";
+    btn.innerText = "Salvando...";
 
     try {
         const id = document.getElementById('oficiante-id').value;
@@ -241,7 +247,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
             alert(res.message);
         }
     } catch (err) {
-        alert("Erro: " + err.message);
+        alert("Erro no processo: " + err.message);
     } finally {
         btn.disabled = false;
         btn.innerText = originalText;
@@ -249,7 +255,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Escala: Cadastro e Edição (Correção de Data)
+ * Escala: Cadastro e Edição (Botão Adicionar/Alterar Corrigido)
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
@@ -257,29 +263,32 @@ document.getElementById('form-escala').onsubmit = async (e) => {
     const turno = document.getElementById('escala-turno').value;
     const setor = document.getElementById('escala-setor').value;
     const inputData = document.getElementById('escala-data').value;
-    const isEdit = document.getElementById('escala-id-original')?.value !== "";
+    
+    // Verificação de ID original para diferenciar ADD de UPDATE
+    const idOrig = document.getElementById('escala-id-original').value;
+    const isEdit = idOrig !== "";
 
     let hInicio = document.getElementById('escala-hora-inicio')?.value;
     let hFim = document.getElementById('escala-hora-fim')?.value;
     
-    if (!hInicio || !setor.toLowerCase().includes('recepcao')) {
-        const horários = CONFIG_TURNOS[turno] || { inicio: "00:00", fim: "00:00" };
+    if (!hInicio || setor !== 'RECEPÇÃO') {
+        const horários = CONFIG_TURNOS[turno] || { inicio: "07:00", fim: "12:00" };
         hInicio = horários.inicio;
         hFim = horários.fim;
     }
 
     const payload = {
         action: isEdit ? "updateEscala" : "addEscala",
-        data: inputData, // Enviamos a string pura YYYY-MM-DD
+        data: inputData, 
         id_oficiante: ofiSelect.value,
         nome_oficiante: ofiSelect.options[ofiSelect.selectedIndex].text,
         setor: setor,
         turno: turno,
         hora_inicio: hInicio,
         hora_fim: hFim,
-        id_original: document.getElementById('escala-id-original')?.value,
-        data_original: document.getElementById('escala-data-original')?.value,
-        turno_original: document.getElementById('escala-turno-original')?.value
+        id_original: idOrig,
+        data_original: document.getElementById('escala-data-original').value,
+        turno_original: document.getElementById('escala-turno-original').value
     };
 
     const res = await apiCall(payload);
@@ -287,49 +296,30 @@ document.getElementById('form-escala').onsubmit = async (e) => {
         closeModal('modal-escala'); 
         fetchData(); 
     } else {
-        alert(res.message);
+        alert("Erro ao salvar escala: " + res.message);
     }
 };
 
 /**
- * Renderização de Tabelas e Oficiantes
+ * Renderização de Tabelas
  */
-function renderOficiantes() {
-    const container = document.getElementById('oficiantes-list');
-    if (!container) return;
-    container.innerHTML = oficiantes.map(o => `
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <div class="flex -space-x-3">
-                <img src="${o.foto1 || ''}" class="w-12 h-12 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
-                <img src="${o.foto2 || ''}" class="w-12 h-12 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="font-bold text-slate-800 truncate text-sm">${o.nome}</p>
-                <p class="text-[9px] text-slate-400 font-mono uppercase">ID: ${o.id}</p>
-            </div>
-            <div class="flex gap-1">
-                <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-            </div>
-        </div>
-    `).join('');
-    lucide.createIcons();
-}
-
 function renderEscalaTable() {
     const tbody = document.getElementById('escala-table-body');
     if (!tbody) return;
     const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-    const escalaOrdenada = [...escala].sort((a,b) => new Date(a.data + 'T12:00:00') - new Date(b.data + 'T12:00:00'));
+    // Ordenação robusta por data (string YYYY-MM-DD)
+    const escalaOrdenada = [...escala].sort((a,b) => a.data.localeCompare(b.data));
 
     tbody.innerHTML = escalaOrdenada.map(e => {
-        // Correção Crucial: O Date precisa da hora do almoço para não pular dia no fuso
-        const d = new Date(e.data + 'T12:00:00');
+        const parts = e.data.split('-');
+        const d = new Date(parts[0], parts[1] - 1, parts[2]); // Cria data local sem shift
+        
         return `
             <tr class="border-b hover:bg-slate-50 transition">
                 <td class="p-4 text-sm font-medium text-slate-700">
-                    ${d.toLocaleDateString('pt-br')} <span class="text-[10px] text-slate-400">(${diasSemana[d.getDay()]})</span>
+                    <div class="font-bold">${parts[2]}/${parts[1]}/${parts[0]}</div>
+                    <div class="text-[10px] text-slate-400 uppercase">${diasSemana[d.getDay()]}</div>
                 </td>
                 <td class="p-4 font-bold text-slate-900">${e.nome_oficiante}</td>
                 <td class="p-4">
@@ -352,20 +342,45 @@ function renderEscalaTable() {
     lucide.createIcons();
 }
 
+function renderOficiantes() {
+    const container = document.getElementById('oficiantes-list');
+    if (!container) return;
+    container.innerHTML = oficiantes.map(o => `
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="flex -space-x-3">
+                <img src="${o.foto1 || ''}" class="w-12 h-12 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
+                <img src="${o.foto2 || ''}" class="w-12 h-12 rounded-full border-2 border-white object-cover bg-slate-100 shadow-sm">
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="font-bold text-slate-800 truncate text-sm">${o.nome}</p>
+                <p class="text-[9px] text-slate-400 font-mono">ID: ${o.id}</p>
+            </div>
+            <div class="flex gap-1">
+                <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+    `).join('');
+    lucide.createIcons();
+}
+
 /**
- * Funções de Edição e Exclusão
+ * Funções de Modal e Edição
  */
 function editEscalaItem(item) {
     openEscalaModal();
+    // Preenchimento dos campos visíveis
     document.getElementById('escala-oficiante').value = item.id_oficiante;
     document.getElementById('escala-data').value = item.data;
     document.getElementById('escala-setor').value = item.setor;
     document.getElementById('escala-turno').value = item.turno;
     
+    // Preenchimento dos IDs de controle para o UPDATE
     document.getElementById('escala-id-original').value = item.id_oficiante;
     document.getElementById('escala-data-original').value = item.data;
     document.getElementById('escala-turno-original').value = item.turno;
 
+    // Trigger visual para campos de hora
     document.getElementById('escala-setor').dispatchEvent(new Event('change'));
     if(item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
     if(item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
@@ -404,7 +419,12 @@ function switchTab(tab) {
         b.classList.add('border-transparent', 'text-slate-500');
     });
     document.getElementById(`tab-${tab}`)?.classList.add('border-blue-600', 'text-blue-600');
-    if (tab === 'calendar' && calendar) setTimeout(() => calendar.updateSize(), 150);
+    if (tab === 'calendar' && calendar) {
+        setTimeout(() => {
+            calendar.updateSize();
+            calendar.render();
+        }, 200);
+    }
 }
 
 function updateOficianteSelect() {
@@ -427,6 +447,8 @@ function openOficianteModal() {
 function openEscalaModal() {
     document.getElementById('form-escala').reset();
     document.getElementById('escala-id-original').value = '';
+    document.getElementById('escala-data-original').value = '';
+    document.getElementById('escala-turno-original').value = '';
     document.getElementById('modal-escala').style.display = 'flex';
 }
 
@@ -434,7 +456,7 @@ function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
 
 /**
- * Exportação em PDF (Datas Corrigidas e Limpas)
+ * Exportação em PDF
  */
 function generateProfessionalPDF() {
     const { jsPDF } = window.jspdf;
@@ -449,10 +471,10 @@ function generateProfessionalPDF() {
     doc.setTextColor(100);
     doc.text(`Relatório extraído em: ${agora.toLocaleDateString('pt-br')} ${agora.getHours()}:${agora.getMinutes()}`, 15, 27);
 
-    // Ordenação e formatação limpa das datas
-    const rows = escala.sort((a,b) => new Date(a.data + 'T12:00:00') - new Date(b.data + 'T12:00:00')).map(e => {
-        const d = new Date(e.data + 'T12:00:00');
-        const dataFormatada = `${d.toLocaleDateString('pt-br')} (${diasSemana[d.getDay()]})`;
+    const rows = escala.sort((a,b) => a.data.localeCompare(b.data)).map(e => {
+        const parts = e.data.split('-');
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        const dataFormatada = `${parts[2]}/${parts[1]}/${parts[0]} (${diasSemana[d.getDay()]})`;
         return [dataFormatada, e.nome_oficiante, e.setor, `${e.turno} (${e.hora_inicio}-${e.hora_fim})` ];
     });
 
@@ -469,14 +491,18 @@ function generateProfessionalPDF() {
 }
 
 /**
- * Auth
+ * Auth e Credenciais
  */
 function handleCredentialResponse(response) {
-    const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    currentUser = payload;
-    document.getElementById('loginContainer')?.classList.add('hidden');
-    document.getElementById('userInfo')?.classList.remove('hidden');
-    document.getElementById('userName').innerText = payload.name;
-    document.getElementById('userPic').src = payload.picture;
-    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+    try {
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        currentUser = payload;
+        document.getElementById('loginContainer')?.classList.add('hidden');
+        document.getElementById('userInfo')?.classList.remove('hidden');
+        document.getElementById('userName').innerText = payload.name;
+        document.getElementById('userPic').src = payload.picture;
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+    } catch (err) {
+        console.error("Erro ao processar login:", err);
+    }
 }
