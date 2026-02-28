@@ -1,5 +1,4 @@
-/* Estilos para o FullCalendar e customizações visuais */
-
+/* Estilos personalizados para o Calendário */
 .fc-event { 
     cursor: pointer; 
     border: none !important; 
@@ -7,7 +6,7 @@
     margin-bottom: 2px !important; 
 }
 
-/* Cores dos Setores */
+/* Cores por Setor */
 .bg-batisterio { 
     background-color: #b0e0e6 !important; 
     color: #004b54 !important; 
@@ -26,7 +25,7 @@
     border-left: 4px solid #22c55e !important; 
 }
 
-/* Loader de carregamento */
+/* Animação do Loader */
 .loader { 
     border-top-color: #3498db; 
     animation: spinner 1.5s linear infinite; 
@@ -37,7 +36,7 @@
     100% { transform: rotate(360deg); } 
 }
 
-/* Ajustes de cabeçalho do calendário */
+/* Ajustes finos do FullCalendar */
 .fc .fc-toolbar-title { 
     font-size: 1.25rem !important; 
     font-weight: 700; 
@@ -51,4 +50,9 @@
 
 .fc .fc-button-primary:hover { 
     background-color: #2563eb; 
+}
+
+/* Responsividade de Imagem no Perfil de Oficiantes */
+#oficiantes-list img {
+    object-fit: cover;
 }
