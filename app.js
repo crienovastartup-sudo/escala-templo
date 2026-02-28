@@ -1,26 +1,27 @@
 /**
  * Configurações Globais e Variáveis de Estado
+ * @constant {string} API_URL - Endpoint do Google Apps Script (Web App)
  */
 const API_URL = "https://script.google.com/macros/s/AKfycbz5n2N8iYhzWGH6Pz7T8aFPgMQ98s9HXLq-wmD-m7mv4vcpOqbUsztCsenJ6k6XVlNnJg/exec";
 
-let oficiantes = []; // Armazena a lista completa de oficiantes vindos do banco
-let escala = [];      // Armazena todos os eventos da escala
-let calendar;        // Instância do FullCalendar
-let currentUser = null; // Informações do usuário logado via Google Auth
+let oficiantes = []; // Lista de objetos dos oficiantes cadastrados
+let escala = [];      // Lista de registros de agendamento na escala
+let calendar;        // Instância global do FullCalendar
+let currentUser = null; // Armazena dados do perfil logado via Google
 
 /**
  * Inicialização do Sistema
- * Executado quando o DOM e todos os recursos externos são carregados.
+ * Configura os ícones, o calendário e carrega os dados iniciais ao abrir a página.
  */
 window.onload = () => {
-    if (typeof lucide !== 'undefined') lucide.createIcons(); // Inicializa ícones da biblioteca Lucide
-    initCalendar(); // Configura o calendário
-    fetchData();    // Busca dados iniciais da API
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    initCalendar();
+    fetchData();
 };
 
 /**
  * Configuração do FullCalendar
- * Define visual, idioma, cabeçalho e a lógica de renderização dos eventos.
+ * Define o comportamento visual e a renderização customizada dos eventos com fotos.
  */
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -35,7 +36,7 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth'
         },
-        // Personalização visual do evento no calendário (fotos e nomes)
+        // Renderização customizada do conteúdo do evento (HTML interno)
         eventContent: function(arg) {
             const ext = arg.event.extendedProps;
             let html = `
@@ -49,42 +50,31 @@ function initCalendar() {
                 </div>
             `;
             return { html };
-        },
-        // Atribui classes CSS específicas baseadas no setor para cores diferentes
-        eventClassNames: function(arg) {
-            const setor = arg.event.extendedProps.setor || '';
-            if (setor.includes('Batist')) return ['bg-batisterio'];
-            if (setor.includes('Recep')) return ['bg-recepcao'];
-            if (setor.includes('Selam')) return ['bg-selamento'];
-            return [];
         }
     });
     calendar.render();
 }
 
 /**
- * Autenticação via Google Identity Services
- * Decodifica o JWT retornado pelo Google e atualiza a UI.
+ * Callback de Autenticação do Google
+ * Decodifica o token JWT e libera o acesso às funções administrativas.
  */
 function handleCredentialResponse(response) {
-    // Decodificação manual do token JWT
     const base64Url = response.credential.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
     
-    const user = JSON.parse(jsonPayload);
-    currentUser = user;
+    currentUser = JSON.parse(jsonPayload);
     
-    // Atualização da Interface pós-login
+    // Atualiza a interface para estado "Logado"
     document.getElementById('loginContainer').classList.add('hidden');
     const info = document.getElementById('userInfo');
     if (info) {
         info.classList.remove('hidden');
-        document.getElementById('userName').innerText = user.name;
-        document.getElementById('userPic').src = user.picture;
+        document.getElementById('userName').innerText = currentUser.name;
+        document.getElementById('userPic').src = currentUser.picture;
     }
-    
-    // Exibe elementos restritos a administradores
+    // Mostra botões e abas exclusivas para admin
     document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
 }
 
@@ -97,9 +87,8 @@ function logout() {
 }
 
 /**
- * Comunicação Centralizada com a API (Google Apps Script)
- * @param {Object} data - Payload contendo a 'action' e dados necessários.
- * @returns {Promise<Object>} - Resposta da API parseada em JSON.
+ * Chamada Genérica para a API (Google Apps Script)
+ * Centraliza o fetch e o controle do overlay de carregamento.
  */
 async function apiCall(data) {
     showLoading(true);
@@ -110,8 +99,8 @@ async function apiCall(data) {
         });
         return await res.json();
     } catch (e) {
-        console.error("Erro na chamada da API:", e);
-        return { status: "error", message: "Erro de conexão com o servidor." };
+        console.error("Erro na API:", e);
+        return { status: "error", message: "Falha na comunicação com o servidor." };
     } finally {
         showLoading(false);
     }
@@ -119,10 +108,9 @@ async function apiCall(data) {
 
 /**
  * Sincronização de Dados
- * Busca as listas de oficiantes e escalas e atualiza todos os componentes da tela.
+ * Busca as listas de oficiantes e escalas da planilha.
  */
 async function fetchData() {
-    // Busca Oficiantes
     const resOficiantes = await apiCall({ action: "listOficiantes" });
     if (resOficiantes.status === "ok") {
         oficiantes = resOficiantes.data;
@@ -130,7 +118,6 @@ async function fetchData() {
         updateOficianteSelect();
     }
 
-    // Busca Escala
     const resEscala = await apiCall({ action: "listEscala" });
     if (resEscala.status === "ok") {
         escala = resEscala.data;
@@ -140,9 +127,8 @@ async function fetchData() {
 }
 
 /**
- * Upload de Imagens para o Cloudinary (Unsigned)
- * @param {File} file - Arquivo de imagem obtido via input file.
- * @returns {Promise<string|null>} - URL da imagem hospedada ou null em caso de falha.
+ * Upload de Imagens para o Cloudinary
+ * Utiliza o modo "unsigned" (sem assinatura no frontend) para segurança e praticidade.
  */
 async function uploadParaCloudinary(file) {
     const cloudName = "dwlrxb6a0"; 
@@ -158,7 +144,12 @@ async function uploadParaCloudinary(file) {
             body: formData
         });
         
-        if (!response.ok) return null;
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Cloudinary Error:", errorData);
+            return null;
+        }
+        
         const data = await response.json();
         return data.secure_url || ""; 
     } catch (error) {
@@ -168,8 +159,8 @@ async function uploadParaCloudinary(file) {
 }
 
 /**
- * Manipulador do Formulário de Oficiantes (Adição e Edição)
- * Lida com o upload sequencial de fotos antes de enviar os dados para a planilha.
+ * Submissão do Formulário de Oficiante (Salvar/Editar)
+ * Gerencia o ciclo: Upload de fotos -> Payload API -> Resposta do Servidor.
  */
 document.getElementById('form-oficiante').onsubmit = async (e) => {
     e.preventDefault();
@@ -179,28 +170,34 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
     
     if (btnSalvar) {
         btnSalvar.disabled = true;
-        btnSalvar.innerText = "Enviando fotos...";
+        btnSalvar.innerText = "Processando...";
     }
 
     try {
         const id = document.getElementById('oficiante-id').value;
-        const file1 = document.getElementById('fotoInput1')?.files[0];
-        const file2 = document.getElementById('fotoInput2')?.files[0];
+        const input1 = document.getElementById('fotoInput1');
+        const input2 = document.getElementById('fotoInput2');
         
-        // Recupera dados atuais se for uma edição para não sobrescrever fotos com vazio
+        if (!input1 || !input2) {
+            throw new Error("Inputs de foto não encontrados no HTML. Verifique os IDs.");
+        }
+
+        const file1 = input1.files[0];
+        const file2 = input2.files[0];
+        
+        // Mantém fotos existentes se for edição e não houver novo arquivo selecionado
         const ori = id ? oficiantes.find(o => String(o.id) === String(id)) : null;
         let url1 = ori ? ori.foto1 : "";
         let url2 = ori ? ori.foto2 : "";
 
-        // Processa Upload da Foto 1 (Principal)
         if (file1) {
+            if (btnSalvar) btnSalvar.innerText = "Enviando Foto 1...";
             const uploadedUrl = await uploadParaCloudinary(file1);
             if (uploadedUrl) url1 = uploadedUrl;
-            else throw new Error("Erro ao processar Foto 1 no servidor de imagens.");
         }
 
-        // Processa Upload da Foto 2 (Opcional)
         if (file2) {
+            if (btnSalvar) btnSalvar.innerText = "Enviando Foto 2...";
             const uploadedUrl = await uploadParaCloudinary(file2);
             if (uploadedUrl) url2 = uploadedUrl;
         }
@@ -213,17 +210,20 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
             foto2: url2
         };
 
+        if (btnSalvar) btnSalvar.innerText = "Gravando na Planilha...";
         const res = await apiCall(payload);
+
         if (res.status === "ok") { 
             closeModal('modal-oficiante'); 
             fetchData(); 
             e.target.reset();
-            alert("Cadastro realizado com sucesso!");
+            alert("Sucesso ao salvar!");
         } else {
-            alert("Erro no servidor: " + res.message);
+            alert("Erro: " + res.message);
         }
     } catch (err) {
-        alert("Erro no processo: " + err.message);
+        console.error("Erro no fluxo:", err);
+        alert("Erro crítico: " + err.message);
     } finally {
         if (btnSalvar) {
             btnSalvar.disabled = false;
@@ -233,7 +233,7 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Manipulador do Formulário de Escala
+ * Gerenciamento de Escala (Adicionar Evento)
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
@@ -256,73 +256,58 @@ document.getElementById('form-escala').onsubmit = async (e) => {
 };
 
 /**
- * Renderiza os cards de Oficiantes na tela de Gerenciamento
+ * Renderiza Cards de Oficiantes
  */
 function renderOficiantes() {
     const container = document.getElementById('oficiantes-list');
     if (!container) return;
-    
     container.innerHTML = oficiantes.map(o => `
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition group">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
             <div class="flex items-center gap-4">
                 <div class="relative flex -space-x-4">
-                    <img src="${o.foto1 || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-full border-2 border-white object-cover shadow-sm bg-slate-100">
-                    <img src="${o.foto2 || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-full border-2 border-white object-cover shadow-sm bg-slate-100">
+                    <img src="${o.foto1 || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-full border-2 border-white object-cover shadow-sm bg-slate-50">
+                    <img src="${o.foto2 || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-full border-2 border-white object-cover shadow-sm bg-slate-50">
                 </div>
                 <div class="flex-1 overflow-hidden">
                     <p class="font-bold text-slate-800 truncate">${o.nome}</p>
-                    <p class="text-[10px] text-slate-400 font-mono">#${o.id}</p>
+                    <p class="text-[10px] text-slate-400 font-mono">ID: ${o.id}</p>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                         <i data-lucide="edit-3" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition">
-                         <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+                    <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                    <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </div>
     `).join('');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
 }
 
 /**
- * Renderiza a tabela de escalas (Lista)
+ * Renderiza Tabela Administrativa da Escala
  */
 function renderEscalaTable() {
     const tbody = document.getElementById('escala-table-body');
     if (!tbody) return;
-    
     tbody.innerHTML = escala.map(e => `
-        <tr class="border-b hover:bg-blue-50/30 transition">
+        <tr class="border-b hover:bg-slate-50 transition">
             <td class="p-4 text-sm font-medium text-slate-700">${new Date(e.data).toLocaleDateString('pt-br')}</td>
-            <td class="p-4"><span class="text-sm font-bold text-slate-900">${e.nome_oficiante}</span></td>
-            <td class="p-4">
-                <div class="flex items-center gap-2">
-                     <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase ${getSetorClass(e.setor)}">${e.setor}</span>
-                     <span class="text-xs text-slate-500 font-medium">${e.turno}</span>
-                </div>
-            </td>
+            <td class="p-4 font-bold text-slate-900">${e.nome_oficiante}</td>
+            <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black uppercase bg-slate-100">${e.setor} - ${e.turno}</span></td>
             <td class="p-4 text-right">
-                <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="p-2 text-slate-300 hover:text-red-500 transition">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
+                <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data}', '${e.turno}')" class="text-slate-200 hover:text-red-500 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </td>
         </tr>
     `).join('');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
 }
 
 /**
- * Atualiza os eventos no calendário baseando-se nos dados da escala
+ * Sincroniza os Eventos com o FullCalendar
  */
 function updateCalendar() {
     if (!calendar) return;
     calendar.removeAllEvents();
-    
     escala.forEach(e => {
-        // Busca objeto do oficiante para obter as fotos
         const ofi = oficiantes.find(o => String(o.id) === String(e.id_oficiante));
         calendar.addEvent({
             title: e.nome_oficiante,
@@ -330,7 +315,6 @@ function updateCalendar() {
             allDay: true,
             extendedProps: {
                 setor: e.setor,
-                turno: e.turno,
                 foto1: ofi ? ofi.foto1 : '',
                 foto2: ofi ? ofi.foto2 : ''
             }
@@ -339,73 +323,25 @@ function updateCalendar() {
 }
 
 /**
- * Define classes CSS para cores de acordo com o setor
- */
-function getSetorClass(setor) {
-    const s = (setor || "").toLowerCase();
-    if (s.includes('batist')) return 'bg-batisterio';
-    if (s.includes('recep')) return 'bg-recepcao';
-    if (s.includes('sela')) return 'bg-selamento';
-    return 'bg-slate-100';
-}
-
-/**
- * Gerenciamento de Abas da Interface
- * @param {string} tab - ID da aba ('calendar', 'manage', 'list')
+ * Navegação por Abas
  */
 function switchTab(tab) {
-    // Esconde todas as seções
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     const sec = document.getElementById(`sec-${tab}`);
-    if (sec) sec.classList.remove('hidden');
+    if (sec) { sec.classList.remove('hidden'); sec.classList.add('block'); }
     
-    // Atualiza visual dos botões do menu
-    document.querySelectorAll('main > div button').forEach(b => {
+    document.querySelectorAll('[id^="tab-"]').forEach(b => {
         b.classList.remove('border-blue-600', 'text-blue-600');
         b.classList.add('border-transparent', 'text-slate-500');
     });
-    
     const tabBtn = document.getElementById(`tab-${tab}`);
     if (tabBtn) tabBtn.classList.add('border-blue-600', 'text-blue-600');
     
-    // Força redimensionamento do calendário se for a aba ativa
-    if (tab === 'calendar' && calendar) calendar.updateSize();
+    if (tab === 'calendar' && calendar) setTimeout(() => calendar.updateSize(), 50);
 }
 
 /**
- * Exportação da Escala para PDF usando jsPDF e autoTable
- */
-function generateProfessionalPDF() {
-    if (typeof window.jspdf === 'undefined') return alert("Biblioteca PDF não carregada.");
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const monthTitle = calendar ? calendar.view.title : "Escala";
-    
-    doc.setFontSize(20);
-    doc.text(`Escala de Oficiantes - ${monthTitle}`, 15, 20);
-    
-    // Ordena dados por data antes de gerar a tabela
-    const filteredData = [...escala].sort((a, b) => new Date(a.data) - new Date(b.data));
-    const rows = filteredData.map(e => [
-        new Date(e.data).toLocaleDateString('pt-br'), 
-        e.nome_oficiante, 
-        e.setor, 
-        e.turno
-    ]);
-
-    doc.autoTable({
-        startY: 35,
-        head: [['Data', 'Oficiante', 'Setor', 'Turno']],
-        body: rows,
-        headStyles: { fillColor: [59, 130, 246] },
-        theme: 'striped'
-    });
-    
-    doc.save(`Escala_${monthTitle.replace(/\s/g, '_')}.pdf`);
-}
-
-/**
- * Controla a visibilidade do overlay de carregamento
+ * Controle do Overlay de Carregamento
  */
 function showLoading(show) {
     const loader = document.getElementById('loading');
@@ -413,7 +349,7 @@ function showLoading(show) {
 }
 
 /**
- * Modais: Abertura e Fechamento
+ * Funções de Controle de Modais
  */
 function openOficianteModal() {
     document.getElementById('form-oficiante').reset();
@@ -422,50 +358,60 @@ function openOficianteModal() {
     document.getElementById('modal-oficiante').style.display = 'flex';
 }
 
+function openEscalaModal() {
+    document.getElementById('form-escala').reset();
+    document.getElementById('modal-escala').style.display = 'flex';
+}
+
 function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.style.display = 'none';
+    document.getElementById(id).style.display = 'none';
 }
 
 /**
- * Atualiza o dropdown de seleção de oficiantes no formulário de escala
+ * Atualiza dropdown de escolha no formulário de escala
  */
 function updateOficianteSelect() {
     const select = document.getElementById('escala-oficiante');
     if (!select) return;
-    select.innerHTML = '<option value="">Selecione um oficiante...</option>' + 
+    select.innerHTML = '<option value="">Selecione...</option>' + 
         oficiantes.map(o => `<option value="${o.id}">${o.nome}</option>`).join('');
 }
 
 /**
- * Exclusão de itens da escala
+ * Operações de Exclusão
  */
 async function deleteEscalaItem(id, data, turno) {
-    if (!confirm("Remover este oficiante deste dia?")) return;
+    if (!confirm("Remover este item da escala?")) return;
     const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
     if (res.status === "ok") fetchData();
 }
 
-/**
- * Exclusão de cadastro de oficiante
- */
 async function deleteOficiante(id) {
-    if (!confirm("Excluir cadastro permanentemente? Isso pode afetar escalas passadas.")) return;
+    if (!confirm("Excluir cadastro do oficiante?")) return;
     const res = await apiCall({ action: "deleteOficiante", id: id });
     if (res.status === "ok") fetchData();
 }
 
 /**
- * Carrega dados no modal para edição de um oficiante
- * @param {string} id - ID do oficiante a ser editado
+ * Prepara modal para edição de cadastro existente
  */
 function editOficiante(id) {
     const o = oficiantes.find(of => String(of.id) === String(id));
     if (!o) return;
-    
     openOficianteModal();
     document.getElementById('oficiante-modal-title').innerText = 'Editar Cadastro';
     document.getElementById('oficiante-id').value = o.id;
     document.getElementById('oficiante-nome').value = o.nome;
-    // Nota: Inputs de arquivo não podem ser preenchidos programaticamente por segurança.
+}
+
+/**
+ * Exportação em PDF
+ */
+function generateProfessionalPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Escala de Oficiantes", 15, 15);
+    const rows = escala.map(e => [new Date(e.data).toLocaleDateString('pt-br'), e.nome_oficiante, e.setor, e.turno]);
+    doc.autoTable({ head: [['Data', 'Nome', 'Setor', 'Turno']], body: rows, startY: 20 });
+    doc.save("escala.pdf");
 }
