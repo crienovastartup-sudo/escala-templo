@@ -1,43 +1,190 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Escala do Templo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Escalas</title>
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- CSS Local -->
+    <link rel="stylesheet" href="style.css">
 </head>
+<body class="bg-slate-50 min-h-screen font-sans">
 
-<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="calendar-days" class="text-blue-600"></i>
+                    <span class="text-xl font-bold text-slate-800 tracking-tight">EscalaOficial</span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Login UI -->
+                    <div id="loginContainer">
+                        <div id="g_id_onload"
+                             data-client_id="845244585324-vsk5gupit47p9lq9k348lghh2atn68p7.apps.googleusercontent.com"
+                             data-callback="handleCredentialResponse">
+                        </div>
+                        <div class="g_id_signin" data-type="standard"></div>
+                    </div>
+                    
+                    <div id="userInfo" class="hidden flex items-center gap-3">
+                        <div class="flex flex-col items-end">
+                            <span id="userName" class="text-sm font-bold text-slate-800"></span>
+                            <button onclick="logout()" class="text-xs text-red-500 hover:underline">Sair do sistema</button>
+                        </div>
+                        <img id="userPic" src="" alt="Perfil" class="w-8 h-8 rounded-full border">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow flex flex-col">
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-slate-200 mb-8 overflow-x-auto">
+            <button onclick="switchTab('calendar')" id="tab-calendar" class="px-6 py-3 border-b-2 border-blue-600 text-blue-600 font-medium whitespace-nowrap">Visualizar Calendário</button>
+            <button onclick="switchTab('oficiantes')" id="tab-oficiantes" class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium admin-only hidden whitespace-nowrap">Gerenciar Oficiantes</button>
+            <button onclick="switchTab('lista-escala')" id="tab-lista-escala" class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium admin-only hidden whitespace-nowrap">Configurar Escala</button>
+        </div>
 
-  <!-- HEADER -->
-  <header class="bg-indigo-700 text-white p-4">
-    <h1 class="text-xl font-bold">Escala do Templo</h1>
-    <p class="text-sm opacity-80">Oficiantes</p>
-  </header>
+        <!-- Section: Calendário -->
+        <section id="sec-calendar" class="block bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Escala Mensal</h2>
+                    <p class="text-sm text-slate-500">Clique nos eventos para ver detalhes.</p>
+                </div>
+                <button onclick="generateProfessionalPDF()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-xl hover:bg-slate-700 transition shadow-lg">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Gerar PDF Profissional
+                </button>
+            </div>
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
+        </section>
 
-  <!-- LOGIN -->
-  <section id="loginBox" class="p-4">
-    <h2 class="font-bold mb-3">Login Administrativo</h2>
-    <input id="loginNome" placeholder="Usuário" class="input">
-    <input id="loginSenha" type="password" placeholder="Senha" class="input mt-2">
-    <button onclick="login()" class="btn mt-3 w-full">Entrar</button>
-  </section>
+        <!-- Section: Oficiantes -->
+        <section id="sec-oficiantes" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-slate-800">Oficiantes</h2>
+                <button onclick="openOficianteModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-md">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Novo Oficiante
+                </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="oficiantes-list"></div>
+        </section>
 
-  <!-- CONTEÚDO -->
-  <main id="content" class="flex-grow p-4 hidden"></main>
+        <!-- Section: Gerenciar Escala -->
+        <section id="sec-lista-escala" class="hidden space-y-6">
+             <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-slate-800">Registros de Escala</h2>
+                <button onclick="openEscalaModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-md">
+                    <i data-lucide="calendar-plus" class="w-4 h-4"></i> Adicionar à Escala
+                </button>
+            </div>
+            <div class="overflow-x-auto bg-white rounded-xl shadow-sm border">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="p-4 font-semibold text-slate-600">Data</th>
+                            <th class="p-4 font-semibold text-slate-600">Oficiante</th>
+                            <th class="p-4 font-semibold text-slate-600">Setor/Turno</th>
+                            <th class="p-4 font-semibold text-slate-600 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="escala-table-body"></tbody>
+                </table>
+            </div>
+        </section>
 
-  <!-- NAV -->
-  <nav class="flex justify-around p-3 border-t">
-    <button onclick="loadEscala()">Escala</button>
-    <button onclick="loadOficiantes()">Oficiantes</button>
-    <button onclick="logout()">Sair</button>
-  </nav>
+    </main>
 
-</div>
+    <!-- Modal Oficiante -->
+    <div id="modal-oficiante" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 text-slate-800" id="oficiante-modal-title">Novo Oficiante</h3>
+            <form id="form-oficiante" class="space-y-4">
+                <input type="hidden" id="oficiante-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nome Completo</label>
+                    <input type="text" id="oficiante-nome" required class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">URL Foto 1 (Perfil)</label>
+                        <input type="text" id="oficiante-url1" placeholder="https://..." class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">URL Foto 2 (Opcional)</label>
+                        <input type="text" id="oficiante-url2" placeholder="https://..." class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('modal-oficiante')" class="px-4 py-2 text-slate-500 font-medium">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<script src="app.js"></script>
+    <!-- Modal Escala -->
+    <div id="modal-escala" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 text-slate-800">Agendar Oficiante</h3>
+            <form id="form-escala" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data</label>
+                    <input type="date" id="escala-data" required class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Oficiante</label>
+                    <select id="escala-oficiante" required class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="">Carregando lista...</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Setor</label>
+                        <select id="escala-setor" required class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                            <option value="Batisterio">Batistério</option>
+                            <option value="Recepção">Recepção</option>
+                            <option value="Selamento">Selamento</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Turno</label>
+                        <select id="escala-turno" required class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                            <option value="Manhã">Manhã</option>
+                            <option value="Tarde">Tarde</option>
+                            <option value="Noite">Noite</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('modal-escala')" class="px-4 py-2 text-slate-500 font-medium">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feedback UI -->
+    <div id="loading" class="fixed inset-0 bg-white/90 z-[200] flex flex-col items-center justify-center hidden">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-16 w-16 mb-4"></div>
+        <p class="text-slate-800 font-bold tracking-widest uppercase text-xs">Processando Requisição</p>
+    </div>
+
+    <!-- JS Local -->
+    <script src="app.js"></script>
 </body>
 </html>
