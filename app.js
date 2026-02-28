@@ -19,18 +19,16 @@ let calendar;
 let currentUser = null; 
 
 /**
- * Funções Utilitárias de Data (Para resolver o erro de "undefined" e datas ISO)
+ * Funções Utilitárias de Data
  */
 function formatarDataLimpa(dataStr) {
     if (!dataStr) return { dataFormatada: "Data Inválida", diaSemana: "N/A", parts: [] };
     
-    // Remove qualquer informação de tempo (T03:00...) se existir
     const apenasData = dataStr.includes('T') ? dataStr.split('T')[0] : dataStr;
-    const parts = apenasData.split('-'); // Esperado YYYY-MM-DD
+    const parts = apenasData.split('-'); 
     
     if (parts.length !== 3) return { dataFormatada: apenasData, diaSemana: "N/A", parts };
 
-    // Criar objeto de data garantindo que não há distorção de fuso horário
     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
     const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     
@@ -55,9 +53,17 @@ function setupEventListeners() {
     const setorSelect = document.getElementById('escala-setor');
     if (setorSelect) {
         setorSelect.addEventListener('change', (e) => {
-            const isRecepcao = e.target.value.toUpperCase() === 'RECEPÇÃO';
+            // Normalização para aceitar "Recepção", "RECEPÇÃO" ou "recepcao"
+            const val = e.target.value.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const isRecepcao = val === 'RECEPCAO';
             const hourFields = document.getElementById('escala-horas-container');
-            if (hourFields) hourFields.classList.toggle('hidden', !isRecepcao);
+            if (hourFields) {
+                if (isRecepcao) {
+                    hourFields.classList.remove('hidden');
+                } else {
+                    hourFields.classList.add('hidden');
+                }
+            }
         });
     }
 
@@ -88,8 +94,8 @@ async function apiCall(data) {
             retries--;
             if (retries === 0) {
                 showLoading(false);
-                console.error("Erro final na API após retentativas:", e);
-                return { status: "error", message: "Falha na comunicação com o servidor. Verifique sua ligação." };
+                console.error("Erro final na API:", e);
+                return { status: "error", message: "Falha na comunicação." };
             }
             await new Promise(resolve => setTimeout(resolve, delay));
             delay *= 2;
@@ -131,19 +137,11 @@ function initCalendar() {
         locale: 'pt-br',
         height: 'auto',
         timeZone: 'UTC',
-        buttonText: {
-            today: 'Hoje',
-            month: 'Mês',
-            week: 'Semana',
-            day: 'Dia',
-            list: 'Agenda'
-        },
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,listWeek'
         },
-        allDayText: 'Dia Todo',
         eventContent: function(arg) {
             const ext = arg.event.extendedProps;
             const setor = (ext.setor || "").toUpperCase();
@@ -153,7 +151,7 @@ function initCalendar() {
             else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
             else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
 
-            let html = `
+            return { html: `
                 <div class="event-card-custom ${colorClass}" style="border-left: 4px solid currentColor; padding: 4px; min-height: 55px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="font-weight: 800; font-size: 11px; line-height: 1.1; color: #1e293b; margin-bottom: 2px;">
@@ -164,19 +162,18 @@ function initCalendar() {
                         </div>
                     </div>
                     <div class="flex -space-x-2 mt-1 justify-end">
-                        ${ext.foto1 ? `<img src="${ext.foto1}" style="width: 26px; height: 26px; border-radius: 999px; border: 2px solid white; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">` : ''}
-                        ${ext.foto2 ? `<img src="${ext.foto2}" style="width: 26px; height: 26px; border-radius: 999px; border: 2px solid white; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">` : ''}
+                        ${ext.foto1 ? `<img src="${ext.foto1}" style="width: 26px; height: 26px; border-radius: 999px; border: 2px solid white; object-fit: cover;">` : ''}
+                        ${ext.foto2 ? `<img src="${ext.foto2}" style="width: 26px; height: 26px; border-radius: 999px; border: 2px solid white; object-fit: cover;">` : ''}
                     </div>
                 </div>
-            `;
-            return { html };
+            `};
         }
     });
     calendar.render();
 }
 
 /**
- * Filtros e Sincronização
+ * Filtros
  */
 function applyFilters() {
     const filterSetor = document.getElementById('filter-setor')?.value;
@@ -199,22 +196,14 @@ function applyFilters() {
             title: e.nome_oficiante,
             start: e.data.split('T')[0], 
             allDay: true,
-            extendedProps: {
-                setor: e.setor,
+            extendedProps: { 
+                setor: e.setor, 
                 turno: e.turno,
-                foto1: ofi ? ofi.foto1 : '',
-                foto2: ofi ? ofi.foto2 : ''
+                foto1: ofi?.foto1 || '',
+                foto2: ofi?.foto2 || ''
             }
         });
     });
-}
-
-function clearFilters() {
-    ['filter-setor', 'filter-turno', 'filter-oficiante'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = "";
-    });
-    applyFilters();
 }
 
 /**
@@ -237,7 +226,7 @@ async function fetchData() {
 }
 
 /**
- * Oficiante: Cadastro e Edição
+ * Oficiante submit
  */
 document.getElementById('form-oficiante').onsubmit = async (e) => {
     e.preventDefault();
@@ -278,10 +267,16 @@ document.getElementById('form-oficiante').onsubmit = async (e) => {
 };
 
 /**
- * Escala: Cadastro e Edição
+ * Escala submit (CORRIGIDO PARA SALVAMENTO E RECEPÇÃO)
  */
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "A guardar...";
+
     const ofiSelect = document.getElementById('escala-oficiante');
     const turno = document.getElementById('escala-turno').value;
     const setor = document.getElementById('escala-setor').value;
@@ -289,14 +284,15 @@ document.getElementById('form-escala').onsubmit = async (e) => {
     
     const idOrig = document.getElementById('escala-id-original').value;
     const dataOrig = document.getElementById('escala-data-original').value;
-    
-    // Forçar a deteção de Novo Registo se os campos ocultos estiverem vazios
-    const isEdit = (idOrig && idOrig.trim() !== "" && dataOrig && dataOrig.trim() !== "");
+    const isEdit = (idOrig && idOrig.trim() !== "");
 
     let hInicio = document.getElementById('escala-hora-inicio')?.value;
     let hFim = document.getElementById('escala-hora-fim')?.value;
     
-    if (!hInicio || setor !== 'RECEPÇÃO') {
+    // Normalização para checar setor Recepção
+    const valSetor = setor.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    if (valSetor !== 'RECEPCAO' || !hInicio) {
         const horários = CONFIG_TURNOS[turno] || { inicio: "07:00", fim: "12:00" };
         hInicio = horários.inicio;
         hFim = horários.fim;
@@ -316,35 +312,41 @@ document.getElementById('form-escala').onsubmit = async (e) => {
         turno_original: document.getElementById('escala-turno-original').value
     };
 
-    const res = await apiCall(payload);
-    if (res.status === "ok") { 
-        closeModal('modal-escala'); 
-        fetchData(); 
-    } else {
-        alert("Erro ao guardar escala: " + res.message);
+    try {
+        const res = await apiCall(payload);
+        if (res.status === "ok") { 
+            closeModal('modal-escala'); 
+            fetchData(); 
+        } else {
+            alert("Erro ao salvar: " + res.message);
+        }
+    } catch (err) {
+        alert("Erro na submissão.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
     }
 };
 
 /**
- * Renderização de Tabelas
+ * Render Tabelas
  */
 function renderEscalaTable() {
     const tbody = document.getElementById('escala-table-body');
     if (!tbody) return;
-
     const escalaOrdenada = [...escala].sort((a,b) => a.data.localeCompare(b.data));
 
     tbody.innerHTML = escalaOrdenada.map(e => {
         const infoData = formatarDataLimpa(e.data);
-        const isRecepcao = e.setor.toUpperCase() === 'RECEPÇÃO';
+        const isRecepcao = e.setor.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'RECEPCAO';
         const horarioInfo = isRecepcao ? `<div class="text-[9px] text-slate-500 mt-0.5">${e.hora_inicio || ''} às ${e.hora_fim || ''}</div>` : '';
 
         return `
             <tr class="border-b hover:bg-slate-50 transition">
-                <td class="p-4 text-sm font-medium text-slate-700">
+                <td class="p-4 text-sm font-medium">
                     <div class="font-bold">${infoData.dataFormatada} - ${infoData.diaSemana}</div>
                 </td>
-                <td class="p-4 font-bold text-slate-900">${e.nome_oficiante}</td>
+                <td class="p-4 font-bold">${e.nome_oficiante}</td>
                 <td class="p-4">
                     <span class="px-2 py-1 rounded text-[10px] font-black uppercase bg-slate-100 text-slate-600">
                         ${e.setor} - ${e.turno}
@@ -352,12 +354,8 @@ function renderEscalaTable() {
                     ${horarioInfo}
                 </td>
                 <td class="p-4 text-right flex gap-2 justify-end">
-                    <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 hover:bg-blue-100 p-2 rounded-lg transition">
-                        <i data-lucide="edit" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+                    <button onclick='editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 p-2"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                    <button onclick="deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-red-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </td>
             </tr>
         `;
@@ -379,8 +377,8 @@ function renderOficiantes() {
                 <p class="text-[9px] text-slate-400 font-mono">ID: ${o.id}</p>
             </div>
             <div class="flex gap-1">
-                <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <button onclick="editOficiante('${o.id}')" class="p-2 text-blue-600 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                <button onclick="deleteOficiante('${o.id}')" class="p-2 text-red-500 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
         </div>
     `).join('');
@@ -388,7 +386,7 @@ function renderOficiantes() {
 }
 
 /**
- * Funções de Modal e Edição
+ * Modais e Edição
  */
 function editEscalaItem(item) {
     openEscalaModal();
@@ -473,12 +471,11 @@ function openEscalaModal() {
     const form = document.getElementById('form-escala');
     if (form) form.reset();
     
-    // Limpeza radical de campos ocultos para garantir que é um NOVO registo
     document.getElementById('escala-id-original').value = '';
     document.getElementById('escala-data-original').value = '';
     document.getElementById('escala-turno-original').value = '';
     
-    document.getElementById('escala-setor').dispatchEvent(new Event('change'));
+    document.getElementById('escala-horas-container')?.classList.add('hidden');
     
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Adicionar à Escala";
@@ -490,7 +487,7 @@ function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function showLoading(show) { document.getElementById('loading')?.classList.toggle('hidden', !show); }
 
 /**
- * Exportação em PDF (Refatorada para eliminar undefined e erros de fuso horário)
+ * Exportação em PDF (Refatorada)
  */
 function generateProfessionalPDF() {
     const { jsPDF } = window.jspdf;
@@ -509,9 +506,9 @@ function generateProfessionalPDF() {
         const diaSemanaCurto = info.diaSemana.substring(0, 3);
         const dataFinal = `${info.dataFormatada} (${diaSemanaCurto})`;
         
-        // Formatação do horário para evitar campos undefined
         let turnoHorario = e.turno || "N/A";
-        if (e.setor.toUpperCase() === 'RECEPÇÃO' && e.hora_inicio && e.hora_fim) {
+        const valSetor = (e.setor || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (valSetor === 'RECEPCAO' && e.hora_inicio && e.hora_fim) {
             turnoHorario = `${e.hora_inicio} - ${e.hora_fim}`;
         }
 
@@ -524,13 +521,7 @@ function generateProfessionalPDF() {
         startY: 35,
         theme: 'striped',
         headStyles: { fillColor: [30, 41, 59], fontSize: 9 },
-        styles: { fontSize: 8, cellPadding: 3 },
-        columnStyles: {
-            0: { cellWidth: 40 },
-            1: { cellWidth: 65 },
-            2: { cellWidth: 40 },
-            3: { cellWidth: 40 }
-        }
+        styles: { fontSize: 8, cellPadding: 3 }
     });
     
     doc.save(`Escala_Templo_${agora.toISOString().split('T')[0]}.pdf`);
