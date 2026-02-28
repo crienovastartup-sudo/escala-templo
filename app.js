@@ -450,12 +450,18 @@ function openOficianteModal() {
 }
 
 function openEscalaModal() {
-    document.getElementById('form-escala').reset();
+    // Limpeza completa do formulário e dos campos ocultos de controlo
+    const form = document.getElementById('form-escala');
+    if (form) form.reset();
+    
     document.getElementById('escala-id-original').value = '';
     document.getElementById('escala-data-original').value = '';
     document.getElementById('escala-turno-original').value = '';
     
-    // Reset do texto do botão para o padrão
+    // Reset visual dos campos de horas (garante que ficam ocultos se não for Recepção)
+    document.getElementById('escala-setor').dispatchEvent(new Event('change'));
+    
+    // Reset do texto do botão para o padrão de inserção
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Adicionar à Escala";
     
