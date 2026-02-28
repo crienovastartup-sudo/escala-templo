@@ -124,19 +124,22 @@
                     <input type="text" id="oficiante-nome" required class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div class="grid grid-cols-1 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">URL Foto 1 (Perfil)</label>
-                        <input type="text" id="oficiante-url1" placeholder="https://..." class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">URL Foto 2 (Opcional)</label>
-                        <input type="text" id="oficiante-url2" placeholder="https://..." class="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Foto 1</label>
+                            <input type="file" id="fotoInput1" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Foto 2</label>
+                            <input type="file" id="fotoInput2" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="closeModal('modal-oficiante')" class="px-4 py-2 text-slate-500 font-medium">Cancelar</button>
                     <button type="submit" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">Salvar</button>
                 </div>
+                
             </form>
         </div>
     </div>
@@ -192,6 +195,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
