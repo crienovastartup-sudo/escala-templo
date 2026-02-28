@@ -25,13 +25,11 @@ let currentUser = null;
 function formatarDataLimpa(dataStr) {
     if (!dataStr) return { dataFormatada: "Data Inválida", diaSemana: "N/A", parts: [] };
     
-    // Pega apenas a parte YYYY-MM-DD
     const apenasData = dataStr.includes('T') ? dataStr.split('T')[0] : dataStr;
     const parts = apenasData.split('-'); 
     
     if (parts.length !== 3) return { dataFormatada: apenasData, diaSemana: "N/A", parts };
 
-    // Cria data ao meio-dia para evitar bugs de fuso horário
     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
     const diasSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     
@@ -73,7 +71,7 @@ function setupEventListeners() {
 }
 
 /**
- * Chamada Genérica para a API com Retry
+ * Chamada Genérica para a API com Retry e Exponential Backoff
  */
 async function apiCall(data) {
     showLoading(true);
@@ -93,7 +91,7 @@ async function apiCall(data) {
             retries--;
             if (retries === 0) {
                 showLoading(false);
-                return { status: "error", message: "Falha na comunicação." };
+                return { status: "error", message: "Falha na comunicação com o servidor após várias tentativas." };
             }
             await new Promise(resolve => setTimeout(resolve, delay));
             delay *= 2;
@@ -122,7 +120,7 @@ async function uploadParaCloudinary(file) {
 }
 
 /**
- * FullCalendar
+ * FullCalendar - Configuração e Renderização
  */
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -163,6 +161,9 @@ function initCalendar() {
     calendar.render();
 }
 
+/**
+ * Lógica de Filtros no Calendário
+ */
 function applyFilters() {
     const filterSetor = document.getElementById('filter-setor')?.value;
     const filterTurno = document.getElementById('filter-turno')?.value;
@@ -194,6 +195,9 @@ function applyFilters() {
     });
 }
 
+/**
+ * Busca de Dados das Planilhas
+ */
 async function fetchData() {
     const resOficiantes = await apiCall({ action: "listOficiantes" });
     if (resOficiantes?.status === "ok") {
@@ -211,14 +215,16 @@ async function fetchData() {
 }
 
 /**
- * Submissão de Formulários
+ * Submissão do Formulário de Oficiante
  */
 const formOficiante = document.getElementById('form-oficiante');
 if (formOficiante) {
     formOficiante.onsubmit = async (e) => {
         e.preventDefault();
         const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
         btn.disabled = true;
+        btn.innerText = "A guardar...";
 
         try {
             const id = document.getElementById('oficiante-id').value;
@@ -238,17 +244,23 @@ if (formOficiante) {
             });
 
             if (res.status === "ok") {
-                window.closeModal('modal-oficiante');
+                closeModal('modal-oficiante');
                 fetchData();
+            } else {
+                alert(res.message);
             }
         } catch (err) {
             alert("Erro: " + err.message);
         } finally {
             btn.disabled = false;
+            btn.innerText = originalText;
         }
     };
 }
 
+/**
+ * Submissão do Formulário de Escala
+ */
 const formEscala = document.getElementById('form-escala');
 if (formEscala) {
     formEscala.onsubmit = async (e) => {
@@ -260,6 +272,7 @@ if (formEscala) {
         const turno = document.getElementById('escala-turno').value;
         const setor = document.getElementById('escala-setor').value;
         const inputData = document.getElementById('escala-data').value;
+        
         const idOrig = document.getElementById('escala-id-original').value;
         const dataOrig = document.getElementById('escala-data-original').value;
         const isEdit = (idOrig && idOrig.trim() !== "");
@@ -290,7 +303,7 @@ if (formEscala) {
 
         const res = await apiCall(payload);
         if (res.status === "ok") { 
-            window.closeModal('modal-escala'); 
+            closeModal('modal-escala'); 
             fetchData(); 
         } else {
             alert("Erro: " + res.message);
@@ -300,7 +313,7 @@ if (formEscala) {
 }
 
 /**
- * Renderização e Gestão de Modais (Expostas Globalmente)
+ * Renderização das Tabelas e Listas
  */
 function renderEscalaTable() {
     const tbody = document.getElementById('escala-table-body');
@@ -315,23 +328,44 @@ function renderEscalaTable() {
         return `
             <tr class="border-b">
                 <td class="p-4 text-sm font-bold">${infoData.dataFormatada}</td>
-                <td class="p-4 text-sm">${e.nome_oficiante}</td>
+                <td class="p-4">${e.nome_oficiante}</td>
                 <td class="p-4">
                     <div class="text-[10px] font-black uppercase text-slate-500">${e.setor} - ${e.turno}</div>
                     ${horarioInfo}
                 </td>
                 <td class="p-4 text-right">
-                    <button onclick='window.editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 mr-2 hover:underline text-sm">Editar</button>
-                    <button onclick="window.deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-red-400 hover:underline text-sm">Remover</button>
+                    <button onclick='window.editEscalaItem(${JSON.stringify(e)})' class="text-blue-500 mr-2 hover:underline">Editar</button>
+                    <button onclick="window.deleteEscalaItem('${e.id_oficiante}', '${e.data.split('T')[0]}', '${e.turno}')" class="text-red-400 hover:underline">Remover</button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
+function renderOficiantes() {
+    const container = document.getElementById('oficiantes-list');
+    if (!container) return;
+    container.innerHTML = oficiantes.map(o => `
+        <div class="bg-white p-4 rounded border flex items-center gap-3">
+            <img src="${o.foto1 || ''}" class="w-10 h-10 rounded-full object-cover">
+            <div class="flex-1">
+                <p class="font-bold text-sm">${o.nome}</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.editOficiante('${o.id}')" class="text-blue-600 hover:underline">Edit</button>
+                <button onclick="window.deleteOficiante('${o.id}')" class="text-red-500 hover:underline">Apagar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Gestão de Modais (Expostas Globalmente para os Botões Funcionarem)
+ */
 window.openEscalaModal = function() {
     const modal = document.getElementById('modal-escala');
     if (!modal) return;
+
     const form = document.getElementById('form-escala');
     if (form) form.reset();
     
@@ -342,8 +376,10 @@ window.openEscalaModal = function() {
     
     const hourContainer = document.getElementById('escala-horas-container');
     if (hourContainer) hourContainer.classList.add('hidden');
+    
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Adicionar à Escala";
+    
     modal.style.display = 'flex';
 };
 
@@ -370,6 +406,7 @@ window.editEscalaItem = function(item) {
 
     const setorSelect = document.getElementById('escala-setor');
     if (setorSelect) setorSelect.dispatchEvent(new Event('change'));
+    
     const submitBtn = document.querySelector('#form-escala button[type="submit"]');
     if (submitBtn) submitBtn.innerText = "Alterar Registo";
 };
@@ -388,79 +425,14 @@ window.closeModal = function(id) {
     if(m) m.style.display = 'none'; 
 };
 
-window.switchTab = function(tab) {
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(`sec-${tab}`)?.classList.remove('hidden');
-    if (tab === 'calendar' && calendar) {
-        setTimeout(() => { calendar.updateSize(); }, 200);
-    }
-};
-
-/**
- * Exportação para PDF (RESTAURADA LÓGICA ORIGINAL)
- */
-window.generateProfessionalPDF = function() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const timestamp = new Date().toLocaleString('pt-BR');
-
-    doc.setFontSize(18);
-    doc.text("Escala Oficial do Templo", 15, 20);
-    doc.setFontSize(10);
-    doc.text(`Gerado em: ${timestamp}`, 15, 27);
-
-    // Mapeia os dados garantindo que as datas e turnos não tragam "undefined"
-    const rows = escala.sort((a,b) => a.data.localeCompare(b.data)).map(e => {
-        const info = formatarDataLimpa(e.data);
-        return [
-            info.dataFormatada, 
-            e.nome_oficiante, 
-            e.setor, 
-            e.turno
-        ];
-    });
-
-    doc.autoTable({ 
-        head: [['Data', 'Oficiante', 'Setor', 'Turno']], 
-        body: rows, 
-        startY: 35,
-        theme: 'striped',
-        headStyles: { fillStyle: [30, 41, 59] }
-    });
-    
-    doc.save("Escala_Templo.pdf");
-};
-
-/**
- * Funções de Oficiantes e Auxiliares
- */
-function renderOficiantes() {
-    const container = document.getElementById('oficiantes-list');
-    if (!container) return;
-    container.innerHTML = oficiantes.map(o => `
-        <div class="bg-white p-4 rounded border flex items-center gap-3">
-            <img src="${o.foto1 || ''}" class="w-10 h-10 rounded-full object-cover">
-            <div class="flex-1">
-                <p class="font-bold text-sm">${o.nome}</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="window.editOficiante('${o.id}')" class="text-blue-600 hover:underline">Edit</button>
-                <button onclick="window.deleteOficiante('${o.id}')" class="text-red-500 hover:underline">Apagar</button>
-            </div>
-        </div>
-    `).join('');
+function showLoading(show) { 
+    const l = document.getElementById('loading');
+    if(l) l.classList.toggle('hidden', !show); 
 }
 
-window.editOficiante = function(id) {
-    const o = oficiantes.find(of => String(of.id) === String(id));
-    if (!o) return;
-    window.openOficianteModal();
-    const idF = document.getElementById('oficiante-id');
-    const nomF = document.getElementById('oficiante-nome');
-    if(idF) idF.value = o.id;
-    if(nomF) nomF.value = o.nome;
-};
-
+/**
+ * Ações de Exclusão e Edição (Expostas Globalmente)
+ */
 window.deleteEscalaItem = async function(id, data, turno) {
     if (confirm("Tens a certeza que desejas remover este item da escala?")) {
         const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
@@ -475,6 +447,30 @@ window.deleteOficiante = async function(id) {
     }
 };
 
+window.editOficiante = function(id) {
+    const o = oficiantes.find(of => String(of.id) === String(id));
+    if (!o) return;
+    window.openOficianteModal();
+    const idF = document.getElementById('oficiante-id');
+    const nomF = document.getElementById('oficiante-nome');
+    if(idF) idF.value = o.id;
+    if(nomF) nomF.value = o.nome;
+};
+
+/**
+ * Navegação por Abas (Exposta Globalmente)
+ */
+window.switchTab = function(tab) {
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(`sec-${tab}`)?.classList.remove('hidden');
+    if (tab === 'calendar' && calendar) {
+        setTimeout(() => { calendar.updateSize(); }, 200);
+    }
+};
+
+/**
+ * Atualização Dinâmica de Dropdowns
+ */
 function updateOficianteSelect() {
     ['escala-oficiante', 'filter-oficiante'].forEach(id => {
         const el = document.getElementById(id);
@@ -485,11 +481,37 @@ function updateOficianteSelect() {
     });
 }
 
-function showLoading(show) { 
-    const l = document.getElementById('loading');
-    if(l) l.classList.toggle('hidden', !show); 
-}
+/**
+ * Exportação para PDF (jsPDF + AutoTable) - Exposta Globalmente
+ */
+window.generateProfessionalPDF = function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text("Escala Oficial do Templo", 15, 20);
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 15, 27);
 
+    const rows = escala.sort((a,b) => a.data.localeCompare(b.data)).map(e => {
+        const info = formatarDataLimpa(e.data);
+        return [info.dataFormatada, e.nome_oficiante, e.setor, e.turno];
+    });
+
+    doc.autoTable({ 
+        head: [['Data', 'Oficiante', 'Setor', 'Turno']], 
+        body: rows, 
+        startY: 35,
+        theme: 'striped',
+        headStyles: { fillStyle: [30, 41, 59] }
+    });
+    
+    doc.save("Escala_Templo.pdf");
+};
+
+/**
+ * Google Auth Callback (Exposta Globalmente)
+ */
 window.handleCredentialResponse = function(response) {
     try {
         const payload = JSON.parse(atob(response.credential.split('.')[1]));
@@ -498,8 +520,10 @@ window.handleCredentialResponse = function(response) {
         document.getElementById('userInfo')?.classList.remove('hidden');
         const userLabel = document.getElementById('userName');
         if(userLabel) userLabel.innerText = payload.name;
+        
+        // Mostrar elementos restritos a administradores
         document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
     } catch (err) {
-        console.error("Erro login Google:", err);
+        console.error("Erro ao processar login Google:", err);
     }
 };
