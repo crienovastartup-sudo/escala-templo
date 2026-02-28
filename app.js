@@ -264,19 +264,40 @@ function updateOficianteSelect() {
 }
 
 // --- Form Handlers ---
+// 3. SUA FUNÇÃO ONSUBMIT ATUALIZADA (Copie e substitua a sua por esta):
 document.getElementById('form-oficiante').onsubmit = async (e) => {
     e.preventDefault();
+    
+    // Captura os arquivos dos novos inputs de arquivo
+    const file1 = document.getElementById('fotoInput1').files[0];
+    const file2 = document.getElementById('fotoInput2').files[0];
+    
+    // Se quiser mostrar um "Carregando..." aqui seria o momento
+    console.log("Iniciando upload de imagens...");
+
+    // Realiza os uploads e obtém os links (URLs)
+    const url1 = file1 ? await uploadParaCloudinary(file1) : "";
+    const url2 = file2 ? await uploadParaCloudinary(file2) : "";
+
     const id = document.getElementById('oficiante-id').value;
+    
     const payload = {
         action: id ? "updateOficiante" : "addOficiante",
         id: id,
         nome: document.getElementById('oficiante-nome').value,
-        foto1: document.getElementById('oficiante-url1').value,
-        foto2: document.getElementById('oficiante-url2').value
+        // Se o upload falhou ou não houve arquivo, mantemos vazio ou tratamos conforme sua regra
+        foto1: url1, 
+        foto2: url2
     };
+
     const res = await apiCall(payload);
-    if (res.status === "ok") { closeModal('modal-oficiante'); fetchData(); }
-    else alert(res.message);
+    if (res.status === "ok") { 
+        closeModal('modal-oficiante'); 
+        fetchData(); 
+        e.target.reset(); // Limpa o formulário e os arquivos selecionados
+    } else {
+        alert(res.message);
+    }
 };
 
 async function uploadParaCloudinary(file) {
@@ -307,32 +328,6 @@ async function uploadParaCloudinary(file) {
     }
 }
 
-async function handleSalvarOficiante(event) {
-    event.preventDefault();
-    
-    const file1 = document.getElementById('fotoInput1').files[0];
-    const file2 = document.getElementById('fotoInput2').files[0];
-    
-    let urlFoto1 = "";
-    let urlFoto2 = "";
-
-    if (file1) {
-        urlFoto1 = await uploadParaCloudinary(file1);
-    }
-
-    if (file2) {
-        urlFoto2 = await uploadParaCloudinary(file2);
-    }
-
-    const dadosOficiante = {
-        nome: document.getElementById('oficiante-nome').value,
-        funcao: document.getElementById('oficiante-funcao').value,
-        url1: urlFoto1, 
-        url2: urlFoto2
-    };
-
-    console.log("Dados prontos para gravar:", dadosOficiante);
-}
 
 document.getElementById('form-escala').onsubmit = async (e) => {
     e.preventDefault();
@@ -372,5 +367,6 @@ function editOficiante(id) {
     document.getElementById('oficiante-url1').value = o.foto1;
     document.getElementById('oficiante-url2').value = o.foto2;
 }
+
 
 
