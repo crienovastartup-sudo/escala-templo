@@ -22,6 +22,15 @@
         .tab-active { color: #2563eb; border-bottom: 2px solid #2563eb; }
         .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Mobile Optimization for Calendar */
+        @media (max-width: 640px) {
+            .fc-toolbar-title { font-size: 1.1rem !important; }
+            .fc-header-toolbar { flex-direction: column; gap: 10px; }
+            .fc-view-harness { height: 600px !important; }
+            .event-card-custom { padding: 4px !important; }
+            .event-card-custom span { font-size: 9px !important; }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -67,13 +76,13 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <button onclick="relatorioCalendarioLista()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Relatório 1
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Lista
                     </button>
                     <button onclick="relatorioCalendarioAgrupadoData()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Relatório 2
+                        <i data-lucide="layers" class="w-4 h-4"></i> Por Data
                     </button>
                     <button onclick="relatorioEscalaPorOficiante()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Relatório 3
+                        <i data-lucide="user-check" class="w-4 h-4"></i> Por Oficiante
                     </button>
                 </div>
             </div>
@@ -88,7 +97,7 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                         <div class="flex items-center justify-between mb-6">
                             <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-blue-600"></i> Oficiantes</h2>
-                            <button onclick="openModal('modal-oficiante')" class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                            <button onclick="openOficianteModal()" class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"><i data-lucide="plus" class="w-5 h-5"></i></button>
                         </div>
                         <div id="oficiantes-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2"></div>
                     </div>
@@ -120,14 +129,15 @@
         </section>
     </main>
 
-    <!-- Modal Oficiante -->
+    <!-- Modal Oficiante (Novo/Editar) -->
     <div id="modal-oficiante" class="fixed inset-0 z-[60] hidden modal-blur flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
-                <h3 class="text-xl font-extrabold text-slate-800">Novo Oficiante</h3>
+                <h3 class="text-xl font-extrabold text-slate-800" id="oficiante-modal-title">Novo Oficiante</h3>
                 <button onclick="closeModal('modal-oficiante')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <form id="form-oficiante" class="p-6 space-y-4">
+                <input type="hidden" id="oficiante-id">
                 <div class="space-y-2">
                     <label class="text-xs font-bold text-slate-500 uppercase">Nome Completo</label>
                     <input type="text" id="oficiante-nome" required class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 ring-blue-500 outline-none">
@@ -136,10 +146,12 @@
                     <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-500 uppercase">Foto 1</label>
                         <input type="file" id="oficiante-foto1" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
+                        <div id="prev-foto1" class="hidden text-[10px] text-blue-600 mt-1 truncate">Arquivo já vinculado</div>
                     </div>
                     <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-500 uppercase">Foto 2</label>
                         <input type="file" id="oficiante-foto2" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
+                        <div id="prev-foto2" class="hidden text-[10px] text-blue-600 mt-1 truncate">Arquivo já vinculado</div>
                     </div>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700">Salvar Oficiante</button>
@@ -147,7 +159,7 @@
         </div>
     </div>
 
-    <!-- Modal Escala -->
+    <!-- Modal Escala (Novo/Editar) -->
     <div id="modal-escala" class="fixed inset-0 z-[60] hidden modal-blur flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
             <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
@@ -184,7 +196,7 @@
                         <option value="TERCEIRO">Terceiro (17h-21h)</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-900 transition-all">Confirmar</button>
+                <button type="submit" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-900 transition-all">Confirmar e Salvar</button>
             </form>
         </div>
     </div>
@@ -237,10 +249,10 @@
 
                     return { html: `
                         <div class="event-card-custom ${colorClass} rounded-lg p-1.5 overflow-hidden w-full flex flex-col gap-1">
-                            <div class="flex items-center gap-1">
-                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/24'}" class="w-5 h-5 rounded-full object-cover border border-white">
-                                <img src="${oficiante.foto2 || 'https://via.placeholder.com/24'}" class="w-5 h-5 rounded-full object-cover border border-white">
-                                <span class="font-bold text-[10px] truncate">${arg.event.title}</span>
+                            <div class="flex items-center gap-1.5">
+                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/28'}" class="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm">
+                                <img src="${oficiante.foto2 || 'https://via.placeholder.com/28'}" class="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm">
+                                <span class="font-bold text-[10px] leading-tight truncate flex-1">${arg.event.title}</span>
                             </div>
                             <div class="text-[9px] opacity-90 font-medium truncate uppercase border-t border-black/5 pt-0.5">
                                 ${ext.turno} • ${ext.setor}
@@ -277,13 +289,16 @@
 
         function renderOficiantes() {
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
-                <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50">
+                <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
                     <div class="flex -space-x-2">
                         <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
                         <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
                     </div>
                     <div class="flex-1 min-w-0"><p class="text-sm font-bold text-slate-800 truncate">${o.nome}</p></div>
-                    <button onclick="deleteOficiante('${o.id}')" class="p-2 text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick='editOficiante(${JSON.stringify(o)})' class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteOficiante('${o.id}')" class="p-2 text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
             `).join('');
             lucide.createIcons();
@@ -334,29 +349,37 @@
             const fS = document.getElementById('filter-setor').value;
             const fT = document.getElementById('filter-turno').value;
             const fO = document.getElementById('filter-oficiante').value;
-            return escala.filter(item => 
-                (!fS || item.setor === fS) && 
-                (!fT || item.turno === fT) && 
-                (!fO || String(item.id_oficiante) === String(fO))
-            );
+            
+            // Obtém período visível no calendário
+            const view = calendar.view;
+            const start = view.activeStart;
+            const end = view.activeEnd;
+
+            return escala.filter(item => {
+                const itemDate = new Date(item.data.substring(0, 10) + "T12:00:00");
+                const matchesFilters = (!fS || item.setor === fS) && 
+                                       (!fT || item.turno === fT) && 
+                                       (!fO || String(item.id_oficiante) === String(fO));
+                const matchesDate = itemDate >= start && itemDate < end;
+                return matchesFilters && matchesDate;
+            });
         }
 
         // --- RELATÓRIOS PDF ---
 
-        // 1- Calendário em Lista (Crescente data, Crescente turno)
         window.relatorioCalendarioLista = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const turnosOrder = { "PRIMEIRO": 1, "SEGUNDO": 2, "TERCEIRO": 3 };
             const data = getFilteredData().sort((a,b) => a.data.localeCompare(b.data) || turnosOrder[a.turno] - turnosOrder[b.turno]);
             
-            doc.setFontSize(16); doc.text("Relatório: Calendário em Lista", 14, 15);
+            doc.setFontSize(16); doc.text("Escala: Calendário em Lista", 14, 15);
+            doc.setFontSize(10); doc.text(`Filtro: ${calendar.view.title}`, 14, 22);
             const rows = data.map(e => [formatarDataLimpa(e.data).dataFormatada, e.turno, e.setor, e.nome_oficiante]);
-            doc.autoTable({ head: [['Data', 'Turno', 'Setor', 'Oficiante']], body: rows, startY: 25 });
-            doc.save("relatorio_lista_calendario.pdf");
+            doc.autoTable({ head: [['Data', 'Turno', 'Setor', 'Oficiante']], body: rows, startY: 28 });
+            doc.save(`escala_lista_${calendar.view.title.replace(/ /g, '_')}.pdf`);
         };
 
-        // 2 - Calendário agrupando por Data
         window.relatorioCalendarioAgrupadoData = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -364,22 +387,22 @@
             const grouped = {};
             data.forEach(e => { if(!grouped[e.data]) grouped[e.data] = []; grouped[e.data].push(e); });
 
-            doc.setFontSize(16); doc.text("Calendário Agrupado por Data", 14, 15);
-            let y = 25;
+            doc.setFontSize(16); doc.text("Escala Agrupada por Data", 14, 15);
+            doc.setFontSize(10); doc.text(`Período: ${calendar.view.title}`, 14, 22);
+            let y = 30;
             Object.keys(grouped).forEach(dateKey => {
                 const info = formatarDataLimpa(dateKey);
                 doc.setFontSize(11); doc.setTextColor(40);
                 doc.text(`${info.dataFormatada} (${info.diaSemana})`, 14, y);
-                y += 5;
+                y += 2;
                 const rows = grouped[dateKey].map(e => [e.nome_oficiante, e.turno, e.setor]);
-                doc.autoTable({ head: [['Oficiante', 'Turno', 'Setor']], body: rows, startY: y, margin: { left: 14 } });
+                doc.autoTable({ head: [['Oficiante', 'Turno', 'Setor']], body: rows, startY: y + 2, margin: { left: 14 } });
                 y = doc.lastAutoTable.finalY + 10;
                 if(y > 270) { doc.addPage(); y = 20; }
             });
-            doc.save("relatorio_agrupado_data.pdf");
+            doc.save("escala_agrupada_data.pdf");
         };
 
-        // 3 - Lista de Escala agrupado por oficiante em card (PDF Simulado por Tabelas/Retângulos)
         window.relatorioEscalaPorOficiante = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -387,7 +410,8 @@
             const oficiantesIds = [...new Set(data.map(e => e.id_oficiante))];
 
             doc.setFontSize(16); doc.text("Escala por Oficiante", 14, 15);
-            let y = 25;
+            doc.setFontSize(10); doc.text(`Período: ${calendar.view.title}`, 14, 22);
+            let y = 30;
 
             oficiantesIds.forEach(id => {
                 const itens = data.filter(e => e.id_oficiante === id).sort((a,b) => a.data.localeCompare(b.data));
@@ -403,8 +427,10 @@
                 y = doc.lastAutoTable.finalY + 10;
                 if(y > 250) { doc.addPage(); y = 20; }
             });
-            doc.save("relatorio_escala_oficiante.pdf");
+            doc.save("escala_por_oficiante.pdf");
         };
+
+        // --- ACTIONS ---
 
         async function uploadFile(file) {
             if(!file) return "";
@@ -415,11 +441,45 @@
             return data.secure_url || "";
         }
 
+        window.openOficianteModal = () => {
+            document.getElementById('form-oficiante').reset();
+            document.getElementById('oficiante-id').value = '';
+            document.getElementById('oficiante-modal-title').innerText = 'Novo Oficiante';
+            document.getElementById('prev-foto1').classList.add('hidden');
+            document.getElementById('prev-foto2').classList.add('hidden');
+            openModal('modal-oficiante');
+        };
+
+        window.editOficiante = (o) => {
+            document.getElementById('oficiante-id').value = o.id;
+            document.getElementById('oficiante-nome').value = o.nome;
+            document.getElementById('oficiante-modal-title').innerText = 'Editar Oficiante';
+            if(o.foto1) document.getElementById('prev-foto1').classList.remove('hidden');
+            if(o.foto2) document.getElementById('prev-foto2').classList.remove('hidden');
+            openModal('modal-oficiante');
+        };
+
         document.getElementById('form-oficiante').onsubmit = async (e) => {
             e.preventDefault();
-            const f1 = await uploadFile(document.getElementById('oficiante-foto1').files[0]);
-            const f2 = await uploadFile(document.getElementById('oficiante-foto2').files[0]);
-            const res = await apiCall({ action: "addOficiante", nome: document.getElementById('oficiante-nome').value, foto1: f1, foto2: f2 });
+            const id = document.getElementById('oficiante-id').value;
+            const f1File = document.getElementById('oficiante-foto1').files[0];
+            const f2File = document.getElementById('oficiante-foto2').files[0];
+            
+            let f1 = f1File ? await uploadFile(f1File) : "";
+            let f2 = f2File ? await uploadFile(f2File) : "";
+
+            // Se for edição e não subiu nova foto, mantém a antiga (o backend precisa tratar isso ou enviamos a URL atual)
+            // Para simplicidade, assumimos que se o campo estiver vazio na edição o backend mantém.
+            
+            const payload = { 
+                action: id ? "updateOficiante" : "addOficiante", 
+                id, 
+                nome: document.getElementById('oficiante-nome').value, 
+                foto1: f1, 
+                foto2: f2 
+            };
+            
+            const res = await apiCall(payload);
             if (res.status === "ok") { closeModal('modal-oficiante'); fetchData(); e.target.reset(); }
         };
 
@@ -427,6 +487,7 @@
             e.preventDefault();
             const ofi = document.getElementById('escala-oficiante');
             const idOrig = document.getElementById('escala-id-original').value;
+            
             const payload = {
                 action: idOrig ? "updateEscala" : "addEscala",
                 data: document.getElementById('escala-data').value,
@@ -438,19 +499,20 @@
                 data_original: document.getElementById('escala-data-original').value,
                 turno_original: document.getElementById('escala-turno-original').value
             };
+            
             const res = await apiCall(payload);
             if (res.status === "ok") { closeModal('modal-escala'); fetchData(); }
         };
 
         window.deleteOficiante = async (id) => {
-            if(confirm("Excluir oficiante?")) {
+            if(confirm("Deseja realmente excluir este oficiante? Isso não removerá escalas passadas, mas impedirá novas.")) {
                 const res = await apiCall({ action: "deleteOficiante", id });
                 if(res.status === "ok") fetchData();
             }
         };
 
         window.deleteEscalaItem = async (id, data, turno) => {
-            if(confirm("Remover da escala?")) {
+            if(confirm("Remover este item da escala?")) {
                 const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
                 if(res.status === "ok") fetchData();
             }
@@ -472,17 +534,27 @@
 
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-        window.openEscalaModal = () => { document.getElementById('form-escala').reset(); document.getElementById('escala-id-original').value = ''; openModal('modal-escala'); };
+        
+        window.openEscalaModal = () => { 
+            document.getElementById('form-escala').reset(); 
+            document.getElementById('escala-id-original').value = ''; 
+            document.getElementById('escala-modal-title').innerText = 'Agendar Escala';
+            openModal('modal-escala'); 
+        };
+
         window.editEscalaItem = (item) => { 
             openEscalaModal();
+            document.getElementById('escala-modal-title').innerText = 'Editar Escala';
             document.getElementById('escala-id-original').value = item.id_oficiante;
             document.getElementById('escala-data-original').value = item.data.substring(0, 10);
             document.getElementById('escala-turno-original').value = item.turno;
+            
             document.getElementById('escala-oficiante').value = item.id_oficiante;
             document.getElementById('escala-data').value = item.data.substring(0, 10);
             document.getElementById('escala-setor').value = item.setor;
             document.getElementById('escala-turno').value = item.turno;
         };
+
         function showLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
     </script>
 </body>
