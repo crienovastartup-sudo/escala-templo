@@ -248,8 +248,6 @@
         </div>
     
         <script>
-           
-            
             // Inicialização de ícones
             lucide.createIcons();
     
@@ -394,7 +392,7 @@
                 
                 div.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
                             ${item.nome_oficiante.substring(0, 2).toUpperCase()}
                         </div>
                         <div>
@@ -603,12 +601,16 @@
                 else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
             
                 // Limpeza dos horários (trata tanto hora_inicial quanto hora_inicio)
-                const hIni = formatarHoraSimples(ext.hora_inicial);
-                const hFim = formatarHoraSimples(ext.hora_final);
-                
-                if (setor === "RECEPÇÃO" && hIni && hFim) {
-                    return { html: `... <div class="text-black">${hIni} - ${hFim}</div> ...` };
-                }
+                const hIni = formatarHora(ext.hora_inicial || ext.hora_inicio);
+                const hFim = formatarHora(ext.hora_final || ext.hora_fim);
+            
+                // HTML do horário específico para Recepção
+                const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
+                    ? `<div class="text-[9px] font-black mt-0.5 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
+                         ${hIni} - ${hFim}
+                       </div>` 
+                    : '';
+            
                 // Definição das imagens (foto1 e foto2)
                 const img1 = oficiante.foto1 || 'https://via.placeholder.com/32';
                 const img2 = oficiante.foto2;
@@ -618,9 +620,9 @@
                         <div class="flex items-center gap-2">
                             <!-- Efeito de Fotos Sobrepostas (ml-3 na segunda foto) -->
                             <div class="flex shrink-0">
-                                <img src="${img1}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
+                                <img src="${img1}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
                                 ${img2 ? `
-                                    <img src="${img2}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
+                                    <img src="${img2}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
                                 ` : ''}
                             </div>
                             
@@ -668,48 +670,27 @@
             } catch (e) { return { status: "error" }; } finally { showLoading(false); }
         }
 
-         
         async function fetchData() {
-            if (typeof showLoading === 'function') showLoading(true);
-            
-            // 1. CARREGAR E ORDENAR OFICIANTES
             const rO = await apiCall({ action: "listOficiantes" });
             if (rO.status === "ok") {
-                // Ordenação robusta garantindo que nomes nulos ou vazios fiquem no final
-                oficiantes = rO.data.sort((a, b) => {
-                    const nomeA = (a.nome || "").trim().toUpperCase();
-                    const nomeB = (b.nome || "").trim().toUpperCase();
-                    
-                    if (!nomeA) return 1;
-                    if (!nomeB) return -1;
-                    
-                    return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
-                });
-                
-                // Renderiza a lista de gestão (se existir)
-                if (typeof renderOficiantes === 'function') renderOficiantes();
-                
-                // Atualiza todos os campos de seleção (Selects)
-                if (typeof updateOficianteSelects === 'function') updateOficianteSelects();
+                oficiantes = rO.data;
+                renderOficiantes();
+                updateOficianteSelects();
             }
-        
-            // 2. CARREGAR ESCALAS
             const rE = await apiCall({ action: "listEscala" });
             if (rE.status === "ok") {
                 escala = rE.data;
-                if (typeof renderEscalaTable === 'function') renderEscalaTable();
-                if (typeof applyFilters === 'function') applyFilters();
+                renderEscalaTable();
+                applyFilters();
             }
-            
-            if (typeof showLoading === 'function') showLoading(false);
         }
-        
+
         function renderOficiantes() {
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
                 <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
                     <div class="flex -space-x-2">
-                        <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-9 h-9 rounded-full object-cover border-2 border-white">
-                        <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-9 h-9 rounded-full object-cover border-2 border-white">
+                        <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
+                        <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
                     </div>
                     <div class="flex-1 min-w-0"><p class="text-sm font-bold text-slate-800 truncate">${o.nome}</p></div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1146,13 +1127,6 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
 
 
 
