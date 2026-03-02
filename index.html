@@ -243,7 +243,7 @@
             if (!document.getElementById('calendar-overlay')) {
                 const overlay = document.createElement('div');
                 overlay.id = 'calendar-overlay';
-                overlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden transition-opacity duration-300';
+                overlay.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[90] hidden transition-all duration-300 opacity-0';
                 document.body.appendChild(overlay);
             }
         
@@ -260,22 +260,23 @@
                 
                 eventOrder: "ordemTurno",
         
-                // Evento de clique para efeito Popup/Flutuante
+                // Evento de clique para efeito Popup/Destaque
                 eventClick: function(info) {
                     const overlay = document.getElementById('calendar-overlay');
                     const cardElement = info.el.querySelector('.event-card-custom');
         
                     // Resetar qualquer card anteriormente selecionado
                     document.querySelectorAll('.event-card-selected').forEach(el => {
-                        el.classList.remove('event-card-selected', 'fixed', 'top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'scale-150', 'z-[100]', 'shadow-2xl', 'w-72');
+                        el.classList.remove('event-card-selected', 'fixed', 'top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'z-[100]', 'shadow-2xl', 'w-[320px]', 'scale-125');
                     });
         
                     if (cardElement) {
-                        // Mostrar o fundo escurecido
+                        // Mostrar o fundo escurecido com animação de opacidade
                         overlay.classList.remove('hidden');
+                        setTimeout(() => overlay.classList.add('opacity-100'), 10);
                         
-                        // Aplicar classes para transformar o card em um Popup centralizado
-                        // fixed e top/left 50% centralizam na tela
+                        // Aplicar classes para transformar o card em um Popup nítido
+                        // Usamos scale-125 moderado e w-[320px] para evitar distorção de fontes
                         cardElement.classList.add(
                             'event-card-selected', 
                             'fixed', 
@@ -283,11 +284,19 @@
                             'left-1/2', 
                             '-translate-x-1/2', 
                             '-translate-y-1/2', 
-                            'scale-150', 
                             'z-[100]', 
                             'shadow-2xl',
-                            'w-72' // Define uma largura fixa maior para o modo popup
+                            'w-[320px]',
+                            'scale-125',
+                            '!p-4' // Aumenta o padding no modo popup para ficar mais elegante
                         );
+        
+                        // Ajustar sub-elementos para ficarem nítidos no popup
+                        const title = cardElement.querySelector('.card-title');
+                        if(title) title.classList.replace('text-[10px]', 'text-sm');
+                        
+                        const footer = cardElement.querySelector('.card-footer');
+                        if(footer) footer.classList.replace('text-[9px]', 'text-xs');
                         
                         info.jsEvent.stopPropagation();
                     }
@@ -309,14 +318,17 @@
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
         
                     return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-lg p-1.5 overflow-hidden w-full flex flex-col gap-1 transition-all duration-300 ease-out cursor-pointer border shadow-sm">
-                            <div class="flex items-center gap-1.5">
-                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm shrink-0">
-                                <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm -ml-3 shrink-0">
-                                <span class="font-bold text-[10px] leading-tight truncate flex-1">${arg.event.title}</span>
+                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-2 transition-all duration-300 ease-out cursor-pointer border shadow-sm ring-1 ring-black/5">
+                            <div class="flex items-center gap-2">
+                                <div class="flex shrink-0">
+                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
+                                    <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
+                                </div>
+                                <span class="card-title font-bold text-[10px] leading-tight truncate flex-1 tracking-tight text-slate-800">${arg.event.title}</span>
                             </div>
-                            <div class="text-[9px] opacity-90 font-medium truncate uppercase border-t border-black/10 pt-1 mt-0.5">
-                                <span class="inline-block bg-white/40 px-1 rounded-sm">${ext.turno}</span> • ${ext.setor}
+                            <div class="card-footer text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1.5 flex justify-between items-center">
+                                <span>${ext.setor}</span>
+                                <span class="bg-black/10 px-1.5 py-0.5 rounded text-[8px]">${ext.turno}</span>
                             </div>
                         </div>
                     `};
@@ -324,16 +336,24 @@
             });
             calendar.render();
         
-            // Função para fechar o popup e voltar ao normal
+            // Função para fechar o popup
             const closePopup = () => {
                 const overlay = document.getElementById('calendar-overlay');
-                overlay.classList.add('hidden');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+        
                 document.querySelectorAll('.event-card-selected').forEach(el => {
-                    el.classList.remove('event-card-selected', 'fixed', 'top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'scale-150', 'z-[100]', 'shadow-2xl', 'w-72');
+                    el.classList.remove('event-card-selected', 'fixed', 'top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'z-[100]', 'shadow-2xl', 'w-[320px]', 'scale-125', '!p-4');
+                    
+                    // Reverter tamanhos de fonte
+                    const title = el.querySelector('.card-title');
+                    if(title) title.classList.replace('text-sm', 'text-[10px]');
+                    
+                    const footer = el.querySelector('.card-footer');
+                    if(footer) footer.classList.replace('text-xs', 'text-[9px]');
                 });
             };
         
-            // Fechar ao clicar no fundo escurecido ou em qualquer lugar fora do card
             document.getElementById('calendar-overlay').addEventListener('click', closePopup);
             document.addEventListener('keydown', (e) => { if(e.key === "Escape") closePopup(); });
         }
@@ -648,6 +668,7 @@
     </script>
 </body>
 </html>
+
 
 
 
