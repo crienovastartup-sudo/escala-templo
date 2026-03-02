@@ -314,17 +314,62 @@
             });
 
     
-            document.getElementById('form-escala').onsubmit = (e) => {
-                e.preventDefault();
+            //document.getElementById('form-escala').onsubmit = (e) => {
+              //  e.preventDefault();
                 // Lógica de salvamento aqui capturando os novos campos se visíveis
-                const dados = {
-                    setor: setorSelect.value,
-                    hora_inicial: document.getElementById('escala-hora-inicial').value,
-                    hora_final: document.getElementById('escala-hora-final').value
+               // const dados = {
+               //     setor: setorSelect.value,
+               //     hora_inicial: document.getElementById('escala-hora-inicial').value,
+               //     hora_final: document.getElementById('escala-hora-final').value
+               // };
+                //console.log("Dados salvos:", dados);
+                //closeModal('modal-escala');
+           // };
+
+            document.getElementById('form-escala').onsubmit = async (e) => {
+                e.preventDefault();
+                
+                // 1. Capturar todos os valores do formulário
+                const idOriginal = document.getElementById('escala-id-original').value;
+                const oficianteId = document.getElementById('escala-oficiante').value;
+                const dataVal = document.getElementById('escala-data').value;
+                const setorVal = document.getElementById('escala-setor').value;
+                const turnoVal = document.getElementById('escala-turno').value;
+                
+                // Captura os novos campos de hora
+                const hIniRaw = document.getElementById('escala-hora-inicial').value;
+                const hFimRaw = document.getElementById('escala-hora-final').value;
+            
+                // 2. Montar o objeto (payload) para enviar para a planilha
+                // Usamos a aspa simples (') para forçar o Google Sheets a tratar como texto/string
+                const payload = {
+                    action: "saveEscala",
+                    id: idOriginal, 
+                    id_oficiante: oficianteId,
+                    data: dataVal,
+                    setor: setorVal,
+                    turno: turnoVal,
+                    hora_inicial: hIniRaw ? `'${hIniRaw}` : "", 
+                    hora_final: hFimRaw ? `'${hFimRaw}` : ""
                 };
-                console.log("Dados salvos:", dados);
-                closeModal('modal-escala');
+            
+                console.log("Dados sendo enviados para o Sheet:", payload);
+            
+                // 3. Chamar a função de salvamento (API)
+                // Se estiver usando o padrão do Google Apps Script:
+                try {
+                    const response = await apiCall(payload); 
+                    
+                    if (response.status === "ok") {
+                        closeModal('modal-escala');
+                        // Recarrega os dados para atualizar o calendário/lista na tela
+                        if (typeof fetchData === 'function') fetchData();
+                    }
+                } catch (err) {
+                    console.error("Erro ao gravar na planilha:", err);
+                }
             };
+            
         </script>
     
     <div id="loading" class="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm hidden flex flex-col items-center justify-center gap-4">
@@ -1142,6 +1187,7 @@
     </script>
 </body>
 </html>
+
 
 
 
