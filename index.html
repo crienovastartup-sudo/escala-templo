@@ -670,13 +670,16 @@
             } catch (e) { return { status: "error" }; } finally { showLoading(false); }
         }
 
-        async function fetchData() {
+       async function fetchData() {
             const rO = await apiCall({ action: "listOficiantes" });
             if (rO.status === "ok") {
-                oficiantes = rO.data;
+                // Esta linha abaixo é a que faz a mágica da ordenação
+                oficiantes = rO.data.sort((a, b) => (a.nome || "").localeCompare((b.nome || ""), 'pt-BR'));
+                
                 renderOficiantes();
                 updateOficianteSelects();
             }
+        
             const rE = await apiCall({ action: "listEscala" });
             if (rE.status === "ok") {
                 escala = rE.data;
@@ -1127,6 +1130,7 @@
     </script>
 </body>
 </html>
+
 
 
 
