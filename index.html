@@ -570,29 +570,45 @@
                     else if (setor.includes("RECEPÇÃO")) colorClass = "bg-yellow-50 text-yellow-800 border-yellow-200";
                     else if (setor.includes("SELAMENTO")) colorClass = "bg-green-50 text-green-700 border-green-200";
 
-                   // 1. Função auxiliar para formatar e limpar a hora vinda do Sheets
+                   // 1. Função auxiliar robusta para formatar e limpar a hora vinda do Sheets
                     const formatarHoraParaExibicao = (valor) => {
                         if (!valor) return "";
+                        
+                        // Converte para string e limpa espaços e a aspa do Sheets
                         let str = String(valor).trim();
-                        // Remove a aspa simples se ela existir no início
                         if (str.startsWith("'")) str = str.substring(1);
-                        
-                        // Tenta extrair apenas HH:mm caso venha algo como "10:00:00" ou ISO
-                        const match = str.match(/(\d{1,2}):(\d{2})/);
-                        if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
-                        
-                        return str.substring(0, 5);
-                    };
-                    // 2. Dentro da configuração do seu calendário:
-                    // eventContent: function(arg) { ... }
                     
+                        // CORREÇÃO PARA O "HORÁRIO MALUCO":
+                        // Se o Sheets enviou uma data completa (ex: 1899-12-30T08:00:00), pegamos só o que vem após o 'T'
+                        if (str.includes('T')) {
+                            str = str.split('T')[1];
+                        }
+                    
+                        // Procura o padrão de horas (00:00) na string resultante
+                        // Isso ignora milissegundos ou textos extras que o Sheets possa ter inserido
+                        const match = str.match(/(\d{1,2}):(\d{2})/);
+                        if (match) {
+                            const horas = match[1].padStart(2, '0');
+                            const minutos = match[2].padStart(2, '0');
+                            return `${horas}:${minutos}`;
+                        }
+                        
+                        // Fallback caso seja apenas os primeiros 5 caracteres (ex: "08:00")
+                        return str.length >= 5 ? str.substring(0, 5) : str;
+                    };
+                    
+                    // 2. Função de renderização do Card
                     const renderizarCardComHorario = (arg) => {
                         const ext = arg.event.extendedProps;
+                        // O Sheets pode retornar hora_inicial ou hora_inicio dependendo da versão da sua planilha
+                        const hIniRaw = ext.hora_inicial || ext.hora_inicio || "";
+                        const hFimRaw = ext.hora_final || ext.hora_fim || "";
+                    
                         const setor = (ext.setor || "").toUpperCase();
                         
-                        // Limpeza dos horários salvos com aspa
-                        const hIni = formatarHoraParaExibicao(ext.hora_inicial);
-                        const hFim = formatarHoraParaExibicao(ext.hora_final);
+                        // Limpeza profunda dos horários
+                        const hIni = formatarHoraParaExibicao(hIniRaw);
+                        const hFim = formatarHoraParaExibicao(hFimRaw);
                     
                         // Define a classe de cor baseada no setor
                         let colorClass = "card-default";
@@ -600,9 +616,9 @@
                         else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
                         else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
                     
-                        // HTML do horário: Só aparece se for RECEPÇÃO e tiver os dois horários
+                        // HTML do horário: Só aparece se for RECEPÇÃO e tiver os dois horários válidos
                         const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
-                            ? `<div class="text-[9px] font-black mt-0.5 bg-white/60 px-1.5 py-0.5 rounded border border-black/10 w-fit text-black">
+                            ? `<div class="text-[9px] font-black mt-0.5 bg-white/70 px-1.5 py-0.5 rounded border border-black/10 w-fit text-black shadow-sm">
                                  ${hIni} - ${hFim}
                                </div>` 
                             : '';
@@ -611,7 +627,7 @@
                             <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.02] text-black">
                                 <div class="flex items-center gap-2">
                                     <div class="flex shrink-0">
-                                        <img src="${ext.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10">
+                                        <img src="${ext.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
                                     </div>
                                     
                                     <div class="flex flex-col flex-1 truncate">
@@ -622,12 +638,15 @@
                                     </div>
                                 </div>
                                 
-                                <div class="text-[9px] font-bold text-black truncate uppercase border-t border-black/10 pt-1 flex justify-between items-center">
+                                <div class="text-[9px] font-bold text-black truncate uppercase border-t border-black/10 pt-1 flex justify-between items-center mt-1">
                                     <span class="truncate pr-1">${ext.setor || 'N/A'}</span>
                                     <span class="bg-black/10 px-1 py-0.5 rounded text-[8px] whitespace-nowrap">${ext.turno || ''}</span>
                                 </div>
                             </div>
                         `};
+                    };
+                    
+                        
                     };
         
                     const container = document.getElementById('calendar-popup-container');
@@ -1245,6 +1264,7 @@
     </script>
 </body>
 </html>
+
 
 
 
