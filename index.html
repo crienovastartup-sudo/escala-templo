@@ -411,15 +411,25 @@
         const formatarHora = (valor) => {
             if (!valor) return "";
             let str = String(valor).trim();
+            
+            // Se o valor começar com o apóstrofo (forçado na planilha), removemos para exibição
+            if (str.startsWith("'")) {
+                str = str.substring(1);
+            }
+        
+            // Corrige o formato ISO vindo do Sheets (1899-12-30T10:00:00)
             if (str.includes('T')) {
                 str = str.split('T')[1];
             }
+            
+            // Busca o padrão HH:mm (ex: 07:00)
             const match = str.match(/(\d{1,2}):(\d{2})/);
             if (match) {
                 return `${match[1].padStart(2, '0')}:${match[2]}`;
             }
             return str.substring(0, 5);
         };
+
         
         // 2. Função de Edição Atualizada
         window.editEscalaItem = (item) => { 
@@ -975,6 +985,7 @@
     </script>
 </body>
 </html>
+
 
 
 
