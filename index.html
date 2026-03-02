@@ -178,47 +178,160 @@
     </div>
 
     <!-- Modal Escala (Novo/Editar) -->
-    <div id="modal-escala" class="fixed inset-0 z-[60] hidden modal-blur flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
-                <h3 class="text-xl font-extrabold text-slate-800" id="escala-modal-title">Agendar Escala</h3>
-                <button onclick="closeModal('modal-escala')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <form id="form-escala" class="p-6 space-y-5">
-                <input type="hidden" id="escala-id-original">
-                <input type="hidden" id="escala-data-original">
-                <input type="hidden" id="escala-turno-original">
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Oficiante</label>
-                    <select id="escala-oficiante" required class="w-full p-3 rounded-xl border border-slate-200 outline-none"></select>
+        <div id="modal-escala" class="fixed inset-0 z-[60] hidden modal-blur flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
+                <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
+                    <h3 class="text-xl font-extrabold text-slate-800" id="escala-modal-title">Agendar Escala</h3>
+                    <button onclick="closeModal('modal-escala')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <form id="form-escala" class="p-6 space-y-5">
+                    <input type="hidden" id="escala-id-original">
+                    <input type="hidden" id="escala-data-original">
+                    <input type="hidden" id="escala-turno-original">
+                    
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Data</label>
-                        <input type="date" id="escala-data" required class="w-full p-3 rounded-xl border border-slate-200">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Oficiante</label>
+                        <select id="escala-oficiante" required class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"></select>
                     </div>
+    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Data</label>
+                            <input type="date" id="escala-data" required class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Setor</label>
+                            <select id="escala-setor" required class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="BATISTÉRIO">Batistério</option>
+                                <option value="RECEPÇÃO">Recepção</option>
+                                <option value="SELAMENTO">Selamento</option>
+                            </select>
+                        </div>
+                    </div>
+    
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Setor</label>
-                        <select id="escala-setor" required class="w-full p-3 rounded-xl border border-slate-200">
-                            <option value="BATISTÉRIO">Batistério</option>
-                            <option value="RECEPÇÃO">Recepção</option>
-                            <option value="SELAMENTO">Selamento</option>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Turno</label>
+                        <select id="escala-turno" required class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="PRIMEIRO">Primeiro (07h-12h)</option>
+                            <option value="SEGUNDO">Segundo (12h-17h)</option>
+                            <option value="TERCEIRO">Terceiro (17h-21h)</option>
                         </select>
                     </div>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Turno</label>
-                    <select id="escala-turno" required class="w-full p-3 rounded-xl border border-slate-200">
-                        <option value="PRIMEIRO">Primeiro (07h-12h)</option>
-                        <option value="SEGUNDO">Segundo (12h-17h)</option>
-                        <option value="TERCEIRO">Terceiro (17h-21h)</option>
-                    </select>
-                </div>
-                <button type="submit" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-900 transition-all">Confirmar e Salvar</button>
-            </form>
+    
+                    <!-- NOVOS CAMPOS EXCLUSIVOS PARA RECEPÇÃO -->
+                    <div id="container-horarios-recepcao" class="hidden grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-blue-600 uppercase">Hora Inicial</label>
+                            <select id="escala-hora-inicio" class="w-full p-2.5 bg-white rounded-lg border border-blue-200 text-xs font-bold outline-none"></select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-blue-600 uppercase">Hora Final</label>
+                            <select id="escala-hora-fim" class="w-full p-2.5 bg-white rounded-lg border border-blue-200 text-xs font-bold outline-none"></select>
+                        </div>
+                    </div>
+    
+                    <button type="submit" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-lg">Confirmar e Salvar</button>
+                </form>
+            </div>
         </div>
-    </div>
-
+    
+        <script>
+            // Inicialização de ícones
+            lucide.createIcons();
+    
+            // Lógica de Modais
+            window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+            window.closeModal = (id) => {
+                document.getElementById(id).classList.add('hidden');
+                if(id === 'modal-escala') resetRecepcaoFields();
+            };
+    
+            window.openEscalaModal = () => { 
+                document.getElementById('form-escala').reset(); 
+                document.getElementById('escala-id-original').value = ''; 
+                document.getElementById('escala-modal-title').innerText = 'Agendar Escala';
+                resetRecepcaoFields();
+                openModal('modal-escala'); 
+            };
+    
+            // --- LÓGICA DE HORÁRIOS PARA RECEPÇÃO ---
+            const setorSelect = document.getElementById('escala-setor');
+            const turnoSelect = document.getElementById('escala-turno');
+            const containerHorarios = document.getElementById('container-horarios-recepcao');
+    
+            function popularDropdownHorarios(turno) {
+                const inicioSel = document.getElementById('escala-hora-inicio');
+                const fimSel = document.getElementById('escala-hora-fim');
+                
+                let startHour, endHour;
+    
+                if (turno === 'PRIMEIRO') { startHour = 7; endHour = 12; }
+                else if (turno === 'SEGUNDO') { startHour = 12; endHour = 18; }
+                else if (turno === 'TERCEIRO') { startHour = 18; endHour = 21; }
+                else { startHour = 7; endHour = 21; }
+    
+                let options = '<option value="">Selecione</option>';
+                for (let h = startHour; h <= endHour; h++) {
+                    for (let m = 0; h === endHour ? m === 0 : m < 60; m += 30) {
+                        const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                        options += `<option value="${time}">${time}</option>`;
+                    }
+                }
+                inicioSel.innerHTML = options;
+                fimSel.innerHTML = options;
+            }
+    
+            function handleRecepcaoDisplay() {
+                if (setorSelect.value === 'RECEPÇÃO') {
+                    containerHorarios.classList.remove('hidden');
+                    popularDropdownHorarios(turnoSelect.value);
+                } else {
+                    containerHorarios.classList.add('hidden');
+                }
+            }
+    
+            function resetRecepcaoFields() {
+                containerHorarios.classList.add('hidden');
+                document.getElementById('escala-hora-inicio').innerHTML = '';
+                document.getElementById('escala-hora-fim').innerHTML = '';
+            }
+    
+            setorSelect.addEventListener('change', handleRecepcaoDisplay);
+            turnoSelect.addEventListener('change', () => {
+                if (setorSelect.value === 'RECEPÇÃO') popularDropdownHorarios(turnoSelect.value);
+            });
+    
+            // Atualização da função de edição para suportar os novos campos
+            window.editEscalaItem = (item) => { 
+                openEscalaModal();
+                document.getElementById('escala-modal-title').innerText = 'Editar Escala';
+                
+                document.getElementById('escala-oficiante').value = item.id_oficiante;
+                document.getElementById('escala-data').value = item.data.substring(0, 10);
+                document.getElementById('escala-setor').value = item.setor;
+                document.getElementById('escala-turno').value = item.turno;
+    
+                // Ativa campos de hora se for recepção e popula os selects antes de definir o valor
+                if (item.setor === 'RECEPÇÃO') {
+                    handleRecepcaoDisplay();
+                    if (item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
+                    if (item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
+                }
+            };
+    
+            document.getElementById('form-escala').onsubmit = (e) => {
+                e.preventDefault();
+                // Lógica de salvamento aqui capturando os novos campos se visíveis
+                const dados = {
+                    setor: setorSelect.value,
+                    hora_inicio: document.getElementById('escala-hora-inicio').value,
+                    hora_fim: document.getElementById('escala-hora-fim').value
+                };
+                console.log("Dados salvos:", dados);
+                closeModal('modal-escala');
+            };
+        </script>
+    
     <div id="loading" class="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm hidden flex flex-col items-center justify-center gap-4">
         <div class="loading-spinner"></div>
         <p class="text-slate-600 font-medium">Sincronizando...</p>
@@ -771,6 +884,7 @@
     </script>
 </body>
 </html>
+
 
 
 
