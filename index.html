@@ -601,8 +601,8 @@
                     const renderizarCardComHorario = (arg) => {
                         const ext = arg.event.extendedProps;
                         // O Sheets pode retornar hora_inicial ou hora_inicio dependendo da versão da sua planilha
-                        const hIniRaw = ext.hora_inicial || ext.hora_inicio || "";
-                        const hFimRaw = ext.hora_final || ext.hora_fim || "";
+                        const hIniRaw = ext.hora_inicial || ext.hora_inicial || "";
+                        const hFimRaw = ext.hora_final || ext.hora_final || "";
                     
                         const setor = (ext.setor || "").toUpperCase();
                         
@@ -1264,6 +1264,7 @@
     </script>
 </body>
 </html>
+
 
 
 
