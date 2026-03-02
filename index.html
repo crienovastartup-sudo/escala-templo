@@ -502,6 +502,18 @@
                     if (setor.includes("BATISTÉRIO")) colorClass = "bg-blue-50 text-blue-700 border-blue-200";
                     else if (setor.includes("RECEPÇÃO")) colorClass = "bg-yellow-50 text-yellow-800 border-yellow-200";
                     else if (setor.includes("SELAMENTO")) colorClass = "bg-green-50 text-green-700 border-green-200";
+
+                    // Limpando os horários para o Popup
+                    const hIni = formatarHora(ext.hora_inicio || ext.hora_inicial);
+                    const hFim = formatarHora(ext.hora_fim || ext.hora_final);
+                    
+                    // Criando a linha de horário formatada para o modal de detalhes
+                    const infoHorario = (setor === "RECEPÇÃO" && hIni && hFim)
+                        ? `<div class="flex items-center gap-2 text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-100 mb-3">
+                             <i data-lucide="clock" class="w-4 h-4"></i>
+                             <span class="text-sm font-bold">Horário: ${hIni} às ${hFim}</span>
+                           </div>`
+                        : '';
         
                     const container = document.getElementById('calendar-popup-container');
                     const overlay = document.getElementById('calendar-popup-overlay');
@@ -977,6 +989,7 @@
     </script>
 </body>
 </html>
+
 
 
 
