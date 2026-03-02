@@ -404,43 +404,50 @@
         }
 
 
-        // 1. Função Auxiliar de Formatação (Adicione isso no início do seu script ou antes do initCalendar)
+        // 1. Função Auxiliar de Formatação Robusta
+        // Esta função extrai a hora real ignorando fusos horários e datas de 1899
         const formatarHora = (valor) => {
             if (!valor) return "";
-            // Se for uma string de data completa (ISO), extrai apenas o HH:mm
-            if (valor.includes('T')) {
-                return valor.split('T')[1].substring(0, 5);
+            
+            const strValor = String(valor);
+        
+            // Se vier no formato ISO/Sheets: 1899-12-30T10:06:28.000Z ou similar
+            if (strValor.includes('T')) {
+                const parteHora = strValor.split('T')[1]; // Pega "10:06:28.000Z"
+                const [h, m] = parteHora.split(':');     // Pega "10" e "06"
+                return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
             }
-            // Caso contrário, retorna o valor original (assumindo que já seja HH:mm)
-            return valor.substring(0, 5);
+        
+            // Se vier como string simples "07:00:00" ou "07:00"
+            const match = strValor.match(/(\d{2}):(\d{2})/);
+            if (match) {
+                return `${match[1]}:${match[2]}`;
+            }
+        
+            return strValor.substring(0, 5);
         };
         
         // 2. Função de Edição Atualizada
         window.editEscalaItem = (item) => { 
-            // 1. Abre o modal e limpa estados anteriores
             openEscalaModal();
             document.getElementById('escala-modal-title').innerText = 'Editar Escala';
             
-            // 2. Grava os IDs originais (necessário para o seu escala.gs localizar a linha certa)
             document.getElementById('escala-id-original').value = item.id_oficiante;
             document.getElementById('escala-data-original').value = item.data.substring(0, 10);
             document.getElementById('escala-turno-original').value = item.turno;
             
-            // 3. Preenche os campos básicos do formulário
             document.getElementById('escala-oficiante').value = item.id_oficiante;
             document.getElementById('escala-data').value = item.data.substring(0, 10);
             document.getElementById('escala-setor').value = item.setor;
             document.getElementById('escala-turno').value = item.turno;
         
-            // 4. Lógica específica para o Container de Recepção
             const containerRecepcao = document.getElementById('container-horarios-recepcao');
             const selectHoraInicial = document.getElementById('escala-hora-inicial');
             const selectHoraFinal = document.getElementById('escala-hora-final');
         
             if (item.setor && item.setor.toUpperCase().includes('RECEPÇÃO')) {
                 containerRecepcao.classList.remove('hidden');
-                
-                // Aplicamos a formatação ao preencher os selects para evitar o erro de data longa
+                // Usando a nova formatação para garantir que o select encontre o valor "07:00"
                 selectHoraInicial.value = formatarHora(item.hora_inicial);
                 selectHoraFinal.value = formatarHora(item.hora_final);
             } else {
@@ -566,7 +573,7 @@
                     else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
 
-                    // Formatação dos horários para evitar o erro de data longa (1899-12-30...)
+                    // Formatação limpa para o card do calendário
                     const hInicial = formatarHora(ext.hora_inicial);
                     const hFinal = formatarHora(ext.hora_final);
                 
@@ -576,7 +583,6 @@
                            </div>` 
                         : '';
                 
-                    // 2. No return, o HTML é montado usando a variável acima
                     return { html: `
                         <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 transition-all duration-300 cursor-pointer border shadow-sm ring-1 ring-black/5">
                             <div class="flex items-center gap-2">
@@ -584,7 +590,6 @@
                                     <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
                                     <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
                                 </div>
-                                <!-- Div flex-col adicionada para empilhar Nome e Horário -->
                                 <div class="flex flex-col flex-1 truncate">
                                     <span class="font-bold text-[10px] leading-tight truncate tracking-tight text-slate-800">${arg.event.title}</span>
                                     ${htmlHorario} 
@@ -971,6 +976,7 @@
     </script>
 </body>
 </html>
+
 
 
 
