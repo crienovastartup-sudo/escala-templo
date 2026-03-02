@@ -501,7 +501,7 @@
                                     <span class="text-sm font-black">${ext.turno}</span>
                                 </div>
 
-                                ${(setor === "RECEPÇÃO" && ext.hora_inicio) ? `<p class="">${ext.hora_inicio} às ${ext.hora_fim}</p>` : ''}
+                                ${(setor === "RECEPÇÃO" && ext.hora_inicial) ? `<p class="">${ext.hora_inicial} às ${ext.hora_final}</p>` : ''}
                                 
                             </div>
                         </div>
@@ -539,9 +539,9 @@
 
                     // 1. Crie a variável do horário antes do return
                     // Esta lógica verifica se é Recepção e se os horários existem nos dados do evento
-                    const htmlHorario = (setor === "RECEPÇÃO" && ext.hora_inicio && ext.hora_fim) 
+                    const htmlHorario = (setor === "RECEPÇÃO" && ext.hora_inicial && ext.hora_final) 
                         ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit">
-                             ${ext.hora_inicio} - ${ext.hora_fim}
+                             ${ext.hora_inicial} - ${ext.hora_final}
                            </div>` 
                         : '';
                 
@@ -916,6 +916,7 @@
     </script>
 </body>
 </html>
+
 
 
 
