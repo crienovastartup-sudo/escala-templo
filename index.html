@@ -671,31 +671,38 @@
         }
 
         async function fetchData() {
-            showLoading(true); // Opcional: mostrar carregando
+            if (typeof showLoading === 'function') showLoading(true);
             
             // 1. CARREGAR E ORDENAR OFICIANTES
             const rO = await apiCall({ action: "listOficiantes" });
             if (rO.status === "ok") {
-                // AQUI ESTÁ O SEGREDO: Ordenamos os dados antes de salvar na variável
+                // Ordenação robusta garantindo que nomes nulos ou vazios fiquem no final
                 oficiantes = rO.data.sort((a, b) => {
-                    const nomeA = (a.nome || "").toUpperCase();
-                    const nomeB = (b.nome || "").toUpperCase();
-                    return nomeA.localeCompare(nomeB, 'pt-BR');
+                    const nomeA = (a.nome || "").trim().toUpperCase();
+                    const nomeB = (b.nome || "").trim().toUpperCase();
+                    
+                    if (!nomeA) return 1;
+                    if (!nomeB) return -1;
+                    
+                    return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
                 });
                 
-                renderOficiantes();
-                updateOficianteSelects(); // Esta função preenche os filtros/selects
+                // Renderiza a lista de gestão (se existir)
+                if (typeof renderOficiantes === 'function') renderOficiantes();
+                
+                // Atualiza todos os campos de seleção (Selects)
+                if (typeof updateOficianteSelects === 'function') updateOficianteSelects();
             }
         
             // 2. CARREGAR ESCALAS
             const rE = await apiCall({ action: "listEscala" });
             if (rE.status === "ok") {
                 escala = rE.data;
-                renderEscalaTable();
-                applyFilters();
+                if (typeof renderEscalaTable === 'function') renderEscalaTable();
+                if (typeof applyFilters === 'function') applyFilters();
             }
             
-            showLoading(false);
+            if (typeof showLoading === 'function') showLoading(false);
         }
         
         function renderOficiantes() {
@@ -1140,6 +1147,7 @@
     </script>
 </body>
 </html>
+
 
 
 
