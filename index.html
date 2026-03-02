@@ -231,6 +231,14 @@
 
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
+            
+            // Mapeamento de pesos para garantir a ordem correta
+            const pesosTurno = {
+                'PRIMEIRO': 1,
+                'SEGUNDO': 2,
+                'TERCEIRO': 3
+            };
+        
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'pt-br',
@@ -242,18 +250,12 @@
                 },
                 buttonText: { today: 'Hoje', month: 'Mês', list: 'Lista' },
                 
-                // REGRA DE OURO: Ordena pelo peso do turno que criaremos abaixo
+                // REGRA DE OURO: O eventOrder procura a propriedade no nível superior do objeto do evento
                 eventOrder: "ordemTurno",
         
-                // Transforma os dados conforme entram no calendário
+                // Garante que ao transformar dados (caso venham via link direto) a ordem seja injetada
                 eventDataTransform: function(eventData) {
-                    const pesos = {
-                        'PRIMEIRO': 1,
-                        'SEGUNDO': 2,
-                        'TERCEIRO': 3
-                    };
-                    // Adiciona a propriedade invisível 'ordemTurno' para o FullCalendar usar no eventOrder
-                    eventData.ordemTurno = pesos[eventData.turno] || 99;
+                    eventData.ordemTurno = pesosTurno[String(eventData.turno).toUpperCase()] || 99;
                     return eventData;
                 },
         
@@ -283,6 +285,7 @@
             });
             calendar.render();
         }
+
         async function apiCall(payload) {
             showLoading(true);
             try {
@@ -350,17 +353,33 @@
             return { dataFormatada: `${p[2]}/${p[1]}/${p[0]}`, diaSemana: dias[d.getDay()] };
         }
 
+        /**
+         * IMPORTANTE: Substitua sua função applyFilters por esta abaixo.
+         * É aqui que a mágica da ordenação acontece quando você filtra os dados.
+         */
         function applyFilters() {
             const fS = document.getElementById('filter-setor').value;
             const fT = document.getElementById('filter-turno').value;
             const fO = document.getElementById('filter-oficiante').value;
+            
+            if (!calendar) return;
             calendar.removeAllEvents();
+        
+            const pesosTurno = { 'PRIMEIRO': 1, 'SEGUNDO': 2, 'TERCEIRO': 3 };
+        
             escala.filter(item => 
                 (!fS || item.setor === fS) && 
                 (!fT || item.turno === fT) && 
                 (!fO || String(item.id_oficiante) === String(fO))
             ).forEach(e => {
-                calendar.addEvent({ title: e.nome_oficiante, start: e.data.substring(0, 10), allDay: true, extendedProps: { ...e } });
+                calendar.addEvent({ 
+                    title: e.nome_oficiante, 
+                    start: e.data.substring(0, 10), 
+                    allDay: true, 
+                    // INJEÇÃO DA ORDEM: Sem isso no primeiro nível, o calendar não ordena.
+                    ordemTurno: pesosTurno[String(e.turno).toUpperCase()] || 99,
+                    extendedProps: { ...e } 
+                });
             });
         }
 
@@ -578,6 +597,7 @@
     </script>
 </body>
 </html>
+
 
 
 
