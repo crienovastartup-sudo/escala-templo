@@ -601,8 +601,8 @@
                 else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
             
                 // Limpeza dos horários (trata tanto hora_inicial quanto hora_inicio)
-                const hIni = formatarHora(ext.hora_inicial || ext.hora_inicio);
-                const hFim = formatarHora(ext.hora_final || ext.hora_fim);
+                const hIni = formatarHora(ext.hora_inicial || ext.hora_inicial);
+                const hFim = formatarHora(ext.hora_final || ext.hora_final);
             
                 // HTML do horário específico para Recepção
                 const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
@@ -1142,6 +1142,7 @@
     </script>
 </body>
 </html>
+
 
 
 
