@@ -684,7 +684,7 @@
                         const nomeB = (b.nome || "").trim();
                         return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
                     });
-                    
+                    renderOficiantes();
                     updateOficianteSelects();
                 }
 
@@ -704,8 +704,8 @@
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
                 <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
                     <div class="flex -space-x-2">
-                        <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-9 h-9 rounded-full object-cover border-2 border-white">
-                        <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-9 h-9 rounded-full object-cover border-2 border-white">
+                        <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
+                        <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
                     </div>
                     <div class="flex-1 min-w-0"><p class="text-sm font-bold text-slate-800 truncate">${o.nome}</p></div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1142,6 +1142,7 @@
     </script>
 </body>
 </html>
+
 
 
 
