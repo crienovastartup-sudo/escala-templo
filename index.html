@@ -403,28 +403,22 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-
-        // 1. Função Auxiliar de Formatação Robusta
-        // Esta função extrai a hora real ignorando fusos horários e datas de 1899
+        /**
+         * PASSO 1: A FUNÇÃO DE FORMATAÇÃO
+         * Coloque esta função logo no início do seu <script> no arquivo principal.
+         * Ela limpa o "1899-12-30" e o fuso horário.
+         */
         const formatarHora = (valor) => {
             if (!valor) return "";
-            
-            const strValor = String(valor);
-        
-            // Se vier no formato ISO/Sheets: 1899-12-30T10:06:28.000Z ou similar
-            if (strValor.includes('T')) {
-                const parteHora = strValor.split('T')[1]; // Pega "10:06:28.000Z"
-                const [h, m] = parteHora.split(':');     // Pega "10" e "06"
-                return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+            let str = String(valor).trim();
+            if (str.includes('T')) {
+                str = str.split('T')[1];
             }
-        
-            // Se vier como string simples "07:00:00" ou "07:00"
-            const match = strValor.match(/(\d{2}):(\d{2})/);
+            const match = str.match(/(\d{1,2}):(\d{2})/);
             if (match) {
-                return `${match[1]}:${match[2]}`;
+                return `${match[1].padStart(2, '0')}:${match[2]}`;
             }
-        
-            return strValor.substring(0, 5);
+            return str.substring(0, 5);
         };
         
         // 2. Função de Edição Atualizada
@@ -563,6 +557,12 @@
                     return eventData;
                 },
         
+                /**
+                 * PASSO 3: APLICAÇÃO NO CARD (eventContent)
+                 * Localize "eventContent: function(arg) {" dentro do "initCalendar"
+                 * e substitua por este bloco abaixo:
+                 */
+                // ... dentro do FullCalendar ...
                 eventContent: function(arg) {
                     const ext = arg.event.extendedProps;
                     const setor = (ext.setor || "").toUpperCase();
@@ -572,35 +572,36 @@
                     if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
                     else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
-
-                    // Formatação limpa para o card do calendário
-                    const hInicial = formatarHora(ext.hora_inicial);
-                    const hFinal = formatarHora(ext.hora_final);
                 
-                    const htmlHorario = (setor.includes("RECEPÇÃO") && hInicial && hFinal) 
+                    // AQUI ESTÁ O PASSO 3: Formata as variáveis antes de usar no HTML
+                    const hIni = formatarHora(ext.hora_inicio || ext.hora_inicial);
+                    const hFim = formatarHora(ext.hora_fim || ext.hora_final);
+                
+                    // Cria o pedaço de HTML que mostra o horário se for recepção
+                    const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
                         ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
-                             ${hInicial} - ${hFinal}
+                             ${hIni} - ${hFim}
                            </div>` 
                         : '';
                 
                     return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 transition-all duration-300 cursor-pointer border shadow-sm ring-1 ring-black/5">
+                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5">
                             <div class="flex items-center gap-2">
                                 <div class="flex shrink-0">
-                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
-                                    <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
+                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
                                 </div>
                                 <div class="flex flex-col flex-1 truncate">
-                                    <span class="font-bold text-[10px] leading-tight truncate tracking-tight text-slate-800">${arg.event.title}</span>
+                                    <span class="font-bold text-[10px] leading-tight truncate text-slate-800">${arg.event.title}</span>
                                     ${htmlHorario} 
                                 </div>
                             </div>
-                            <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1.5 flex justify-between items-center">
+                            <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1 flex justify-between items-center">
                                 <span>${ext.setor}</span>
-                                <span class="bg-black/10 px-1.5 py-0.5 rounded text-[8px]">${ext.turno}</span>
+                                <span class="bg-black/10 px-1 py-0.5 rounded text-[8px]">${ext.turno}</span>
                             </div>
                         </div>
                     `};
+                }
         
                     return { html: `
                         <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-2 transition-all duration-300 ease-out cursor-pointer border shadow-sm ring-1 ring-black/5">
@@ -976,6 +977,7 @@
     </script>
 </body>
 </html>
+
 
 
 
