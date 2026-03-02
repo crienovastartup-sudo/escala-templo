@@ -392,7 +392,7 @@
                 
                 div.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
                             ${item.nome_oficiante.substring(0, 2).toUpperCase()}
                         </div>
                         <div>
@@ -620,9 +620,9 @@
                         <div class="flex items-center gap-2">
                             <!-- Efeito de Fotos Sobrepostas (ml-3 na segunda foto) -->
                             <div class="flex shrink-0">
-                                <img src="${img1}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
+                                <img src="${img1}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
                                 ${img2 ? `
-                                    <img src="${img2}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
+                                    <img src="${img2}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
                                 ` : ''}
                             </div>
                             
@@ -709,8 +709,8 @@
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
                 <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
                     <div class="flex -space-x-2">
-                        <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
-                        <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white">
+                        <img src="${o.foto1 || 'https://via.placeholder.com/32'}" class="w-9 h-9 rounded-full object-cover border-2 border-white">
+                        <img src="${o.foto2 || 'https://via.placeholder.com/32'}" class="w-9 h-9 rounded-full object-cover border-2 border-white">
                     </div>
                     <div class="flex-1 min-w-0"><p class="text-sm font-bold text-slate-800 truncate">${o.nome}</p></div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1147,6 +1147,7 @@
     </script>
 </body>
 </html>
+
 
 
 
