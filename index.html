@@ -576,8 +576,8 @@
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
                 
                     // AQUI ESTÁ O PASSO 3: Formata as variáveis antes de usar no HTML
-                    const hIni = formatarHora(ext.hora_inicio || ext.hora_inicial);
-                    const hFim = formatarHora(ext.hora_fim || ext.hora_final);
+                    const hIni = formatarHora(ext.hora_inicial || ext.hora_inicial);
+                    const hFim = formatarHora(ext.hora_final || ext.hora_final);
                 
                     // Cria o pedaço de HTML que mostra o horário se for recepção
                     const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
@@ -979,6 +979,7 @@
     </script>
 </body>
 </html>
+
 
 
 
