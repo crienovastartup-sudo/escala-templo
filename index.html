@@ -239,12 +239,17 @@
                 'TERCEIRO': 3
             };
         
-            // Criar overlay de fundo se não existir
-            if (!document.getElementById('calendar-overlay')) {
-                const overlay = document.createElement('div');
-                overlay.id = 'calendar-overlay';
-                overlay.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[90] hidden transition-all duration-300 opacity-0';
-                document.body.appendChild(overlay);
+            // Criar estrutura do Modal de Visualização se não existir
+            if (!document.getElementById('calendar-popup-container')) {
+                const modalHtml = `
+                    <div id="calendar-popup-container" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+                        <div id="calendar-popup-overlay" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0"></div>
+                        <div id="calendar-popup-content" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all duration-300 scale-90 opacity-0 border border-white/20">
+                            <!-- Conteúdo dinâmico será injetado aqui -->
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
             }
         
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -260,46 +265,54 @@
                 
                 eventOrder: "ordemTurno",
         
-                // Evento de clique para efeito Popup/Destaque
+                // Evento de clique para abrir o Popup reconstruído
                 eventClick: function(info) {
-                    const overlay = document.getElementById('calendar-overlay');
-                    const cardElement = info.el.querySelector('.event-card-custom');
+                    const ext = info.event.extendedProps;
+                    const oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
+                    const setor = (ext.setor || "").toUpperCase();
+                    
+                    let colorClass = "bg-slate-100 text-slate-700 border-slate-200";
+                    if (setor.includes("BATISTÉRIO")) colorClass = "bg-blue-50 text-blue-700 border-blue-200";
+                    else if (setor.includes("RECEPÇÃO")) colorClass = "bg-yellow-50 text-yellow-800 border-yellow-200";
+                    else if (setor.includes("SELAMENTO")) colorClass = "bg-green-50 text-green-700 border-green-200";
         
-                    // Resetar qualquer card anteriormente selecionado
-                    document.querySelectorAll('.event-card-selected').forEach(el => {
-                        el.classList.remove('event-card-selected', 'fixed', 'top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'z-[100]', 'shadow-2xl', 'w-[320px]', 'scale-125');
-                    });
+                    const container = document.getElementById('calendar-popup-container');
+                    const overlay = document.getElementById('calendar-popup-overlay');
+                    const content = document.getElementById('calendar-popup-content');
         
-                    if (cardElement) {
-                        // Mostrar o fundo escurecido com animação de opacidade
-                        overlay.classList.remove('hidden');
-                        setTimeout(() => overlay.classList.add('opacity-100'), 10);
-                        
-                        // Aplicar classes para transformar o card em um Popup nítido
-                        // Usamos scale-125 moderado e w-[320px] para evitar distorção de fontes
-                        cardElement.classList.add(
-                            'event-card-selected', 
-                            'fixed', 
-                            'top-1/2', 
-                            'left-1/2', 
-                            '-translate-x-1/2', 
-                            '-translate-y-1/2', 
-                            'z-[100]', 
-                            'shadow-2xl',
-                            'w-[320px]',
-                            'scale-125',
-                            '!p-4' // Aumenta o padding no modo popup para ficar mais elegante
-                        );
+                    // Injetar HTML limpo e de alta resolução no Modal
+                    content.innerHTML = `
+                        <div class="p-8 ${colorClass.split(' ')[0]}">
+                            <div class="flex flex-col items-center text-center gap-4">
+                                <div class="flex -space-x-4 mb-2">
+                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/100'}" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg">
+                                    <img src="${oficiante.foto2 || 'https://via.placeholder.com/100'}" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg">
+                                </div>
+                                <div>
+                                    <h3 class="text-2xl font-black tracking-tight leading-tight">${info.event.title}</h3>
+                                    <p class="text-sm font-medium opacity-75 uppercase mt-1 tracking-widest">${ext.setor}</p>
+                                </div>
+                                <div class="mt-4 py-2 px-6 rounded-full bg-white/60 backdrop-blur-md border border-white/40 shadow-sm inline-flex items-center gap-2">
+                                    <span class="text-xs font-bold uppercase tracking-tighter opacity-50">Turno</span>
+                                    <span class="text-sm font-black">${ext.turno}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 border-t flex justify-center">
+                            <button onclick="closeCalendarPopup()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg">
+                                Fechar Visualização
+                            </button>
+                        </div>
+                    `;
         
-                        // Ajustar sub-elementos para ficarem nítidos no popup
-                        const title = cardElement.querySelector('.card-title');
-                        if(title) title.classList.replace('text-[10px]', 'text-sm');
-                        
-                        const footer = cardElement.querySelector('.card-footer');
-                        if(footer) footer.classList.replace('text-[9px]', 'text-xs');
-                        
-                        info.jsEvent.stopPropagation();
-                    }
+                    // Mostrar com animação
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+                    setTimeout(() => {
+                        overlay.classList.replace('opacity-0', 'opacity-100');
+                        content.classList.replace('scale-90', 'scale-100');
+                        content.classList.replace('opacity-0', 'opacity-100');
+                    }, 10);
                 },
         
                 eventDataTransform: function(eventData) {
@@ -324,9 +337,9 @@
                                     <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
                                     <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
                                 </div>
-                                <span class="card-title font-bold text-[10px] leading-tight truncate flex-1 tracking-tight text-slate-800">${arg.event.title}</span>
+                                <span class="font-bold text-[10px] leading-tight truncate flex-1 tracking-tight text-slate-800">${arg.event.title}</span>
                             </div>
-                            <div class="card-footer text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1.5 flex justify-between items-center">
+                            <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1.5 flex justify-between items-center">
                                 <span>${ext.setor}</span>
                                 <span class="bg-black/10 px-1.5 py-0.5 rounded text-[8px]">${ext.turno}</span>
                             </div>
@@ -336,26 +349,23 @@
             });
             calendar.render();
         
-            // Função para fechar o popup
-            const closePopup = () => {
-                const overlay = document.getElementById('calendar-overlay');
-                overlay.classList.remove('opacity-100');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
+            // Funções globais para o Popup
+            window.closeCalendarPopup = function() {
+                const container = document.getElementById('calendar-popup-container');
+                const overlay = document.getElementById('calendar-popup-overlay');
+                const content = document.getElementById('calendar-popup-content');
         
-                document.querySelectorAll('.event-card-selected').forEach(el => {
-                    el.classList.remove('event-card-selected', 'fixed', 'top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'z-[100]', 'shadow-2xl', 'w-[320px]', 'scale-125', '!p-4');
-                    
-                    // Reverter tamanhos de fonte
-                    const title = el.querySelector('.card-title');
-                    if(title) title.classList.replace('text-sm', 'text-[10px]');
-                    
-                    const footer = el.querySelector('.card-footer');
-                    if(footer) footer.classList.replace('text-xs', 'text-[9px]');
-                });
+                overlay.classList.replace('opacity-100', 'opacity-0');
+                content.classList.replace('scale-100', 'scale-90');
+                content.classList.replace('opacity-100', 'opacity-0');
+                
+                setTimeout(() => {
+                    container.classList.replace('flex', 'hidden');
+                }, 300);
             };
         
-            document.getElementById('calendar-overlay').addEventListener('click', closePopup);
-            document.addEventListener('keydown', (e) => { if(e.key === "Escape") closePopup(); });
+            document.getElementById('calendar-popup-overlay').addEventListener('click', window.closeCalendarPopup);
+            document.addEventListener('keydown', (e) => { if(e.key === "Escape") window.closeCalendarPopup(); });
         }
         async function apiCall(payload) {
             showLoading(true);
@@ -668,6 +678,7 @@
     </script>
 </body>
 </html>
+
 
 
 
