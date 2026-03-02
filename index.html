@@ -564,63 +564,50 @@
                  * Localize "eventContent: function(arg) {" dentro do "initCalendar"
                  * e substitua por este bloco abaixo:
                  */
-                // ... dentro do FullCalendar ...
                 eventContent: function(arg) {
-                    const ext = arg.event.extendedProps;
-                    const setor = (ext.setor || "").toUpperCase();
-                    const oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
-                    
-                    let colorClass = "card-default";
-                    if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
-                    else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
-                    else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+                const ext = arg.event.extendedProps;
+                const setor = (ext.setor || "").toUpperCase();
                 
-                    // AQUI ESTÁ O PASSO 3: Formata as variáveis antes de usar no HTML
-                    const hIni = formatarHora(ext.hora_inicial || ext.hora_inicial);
-                    const hFim = formatarHora(ext.hora_final || ext.hora_final);
+                // Busca o oficiante na lista global. 
+                // Certifique-se de que a variável 'oficiantes' esteja populada com os dados do banco.
+                const oficiante = (typeof oficiantes !== 'undefined' && oficiantes.length > 0)
+                    ? oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {}
+                    : {};
                 
-                    // Cria o pedaço de HTML que mostra o horário se for recepção
-                    const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
-                        ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
-                             ${hIni} - ${hFim}
-                           </div>` 
-                        : '';
-                
-                    return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5">
-                            <div class="flex items-center gap-2">
-                                <div class="flex shrink-0">
-                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
-                                </div>
-                                <div class="flex flex-col flex-1 truncate">
-                                    <span class="font-bold text-[10px] leading-tight truncate text-slate-800">${arg.event.title}</span>
-                                    ${htmlHorario} 
-                                </div>
+                let colorClass = "card-default";
+                if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
+                else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
+                else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+            
+                // AJUSTE DE NOMES: Usando hora_inicial e hora_final (padrão do Sheets)
+                const hIni = formatarHora(ext.hora_inicial || ext.hora_inicio);
+                const hFim = formatarHora(ext.hora_final || ext.hora_fim);
+            
+                // HTML condicional para o horário
+                const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
+                    ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
+                         ${hIni} - ${hFim}
+                       </div>` 
+                    : '';
+            
+                return { html: `
+                    <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5">
+                        <div class="flex items-center gap-2">
+                            <div class="flex shrink-0">
+                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" onerror="this.src='https://via.placeholder.com/32'">
                             </div>
-                            <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1 flex justify-between items-center">
-                                <span>${ext.setor}</span>
-                                <span class="bg-black/10 px-1 py-0.5 rounded text-[8px]">${ext.turno}</span>
+                            <div class="flex flex-col flex-1 truncate">
+                                <span class="font-bold text-[10px] leading-tight truncate text-slate-800">${arg.event.title || 'Sem Nome'}</span>
+                                ${htmlHorario} 
                             </div>
                         </div>
-                    `};
-                }
-        
-                    return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-2 transition-all duration-300 ease-out cursor-pointer border shadow-sm ring-1 ring-black/5">
-                            <div class="flex items-center gap-2">
-                                <div class="flex shrink-0">
-                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
-                                    <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
-                                </div>
-                                <span class="font-bold text-[10px] leading-tight truncate flex-1 tracking-tight text-slate-800">${arg.event.title}</span>
-                            </div>
-                            <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1.5 flex justify-between items-center">
-                                <span>${ext.setor}</span>
-                                <span class="bg-black/10 px-1.5 py-0.5 rounded text-[8px]">${ext.turno}</span>
-                            </div>
+                        <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1 flex justify-between items-center">
+                            <span>${ext.setor || 'N/A'}</span>
+                            <span class="bg-black/10 px-1 py-0.5 rounded text-[8px]">${ext.turno || ''}</span>
                         </div>
-                    `};
-                }
+                    </div>
+                `};
+            }
             });
             calendar.render();
         
@@ -979,6 +966,7 @@
     </script>
 </body>
 </html>
+
 
 
 
