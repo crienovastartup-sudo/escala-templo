@@ -229,6 +229,67 @@
             });
         }
 
+        /**
+         * Adicione este input na sua área de Gestão de Escala (HTML):
+         * <input type="month" id="gestao-month-filter" onchange="renderGestaoEscala()" class="p-2 border rounded-xl text-xs">
+         */
+        
+        // Função atualizada para renderizar a Gestão de Escala com filtro de mês
+        function renderGestaoEscala() {
+            const container = document.getElementById('gestao-escala-lista');
+            const monthFilter = document.getElementById('gestao-month-filter')?.value; // Ex: "2024-05"
+            
+            if (!container) return;
+            container.innerHTML = '';
+        
+            // Filtrar a escala com base no mês escolhido (se houver filtro)
+            const escalaFiltrada = escala.filter(item => {
+                if (!monthFilter) return true;
+                // Compara o ano-mês da data (YYYY-MM) com o valor do filtro
+                return item.data.substring(0, 7) === monthFilter;
+            });
+        
+            // Ordenar por data (mais recente primeiro)
+            escalaFiltrada.sort((a, b) => new Date(b.data) - new Date(a.data));
+        
+            if (escalaFiltrada.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center opacity-50 text-xs">Nenhum registro encontrado para este período.</div>';
+                return;
+            }
+        
+            escalaFiltrada.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:shadow-sm transition-all';
+                
+                // Formatar data para exibição
+                const dataFormatada = new Date(item.data).toLocaleDateString('pt-BR');
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
+                            ${item.nome_oficiante.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">${item.nome_oficiante}</div>
+                            <div class="text-[10px] opacity-60 uppercase">${dataFormatada} • ${item.turno} • ${item.setor}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick='editEscalaItem(${JSON.stringify(item)})' class="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteEscalaItem('${item.id_oficiante}', '${item.data}', '${item.turno}')" class="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
             
@@ -692,6 +753,7 @@
     </script>
 </body>
 </html>
+
 
 
 
