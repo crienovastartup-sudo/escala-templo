@@ -271,6 +271,11 @@
                     const oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
                     const setor = (ext.setor || "").toUpperCase();
                     
+                    // Formatação da Data e Dia da Semana
+                    const dataObj = new Date(info.event.start);
+                    const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                    const diaSemana = dataObj.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase();
+                    
                     let colorClass = "bg-slate-100 text-slate-700 border-slate-200";
                     if (setor.includes("BATISTÉRIO")) colorClass = "bg-blue-50 text-blue-700 border-blue-200";
                     else if (setor.includes("RECEPÇÃO")) colorClass = "bg-yellow-50 text-yellow-800 border-yellow-200";
@@ -280,18 +285,25 @@
                     const overlay = document.getElementById('calendar-popup-overlay');
                     const content = document.getElementById('calendar-popup-content');
         
-                    // Injetar HTML limpo e de alta resolução no Modal
+                    // Injetar HTML limpo e de alta resolução no Modal com Data e Dia
                     content.innerHTML = `
                         <div class="p-8 ${colorClass.split(' ')[0]}">
                             <div class="flex flex-col items-center text-center gap-4">
+                                <div class="flex flex-col gap-1 mb-2">
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] opacity-50">${diaSemana}</span>
+                                    <span class="text-xs font-bold opacity-80">${dataFormatada}</span>
+                                </div>
+                                
                                 <div class="flex -space-x-4 mb-2">
                                     <img src="${oficiante.foto1 || 'https://via.placeholder.com/100'}" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg">
                                     <img src="${oficiante.foto2 || 'https://via.placeholder.com/100'}" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg">
                                 </div>
+                                
                                 <div>
-                                    <h3 class="text-2xl font-black tracking-tight leading-tight">${info.event.title}</h3>
+                                    <h3 class="text-2xl font-black tracking-tight leading-tight text-slate-900">${info.event.title}</h3>
                                     <p class="text-sm font-medium opacity-75 uppercase mt-1 tracking-widest">${ext.setor}</p>
                                 </div>
+                                
                                 <div class="mt-4 py-2 px-6 rounded-full bg-white/60 backdrop-blur-md border border-white/40 shadow-sm inline-flex items-center gap-2">
                                     <span class="text-xs font-bold uppercase tracking-tighter opacity-50">Turno</span>
                                     <span class="text-sm font-black">${ext.turno}</span>
@@ -367,6 +379,8 @@
             document.getElementById('calendar-popup-overlay').addEventListener('click', window.closeCalendarPopup);
             document.addEventListener('keydown', (e) => { if(e.key === "Escape") window.closeCalendarPopup(); });
         }
+
+        
         async function apiCall(payload) {
             showLoading(true);
             try {
@@ -678,6 +692,7 @@
     </script>
 </body>
 </html>
+
 
 
 
