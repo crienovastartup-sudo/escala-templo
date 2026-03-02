@@ -248,6 +248,19 @@
         </div>
     
         <script>
+            /**
+             * PASSO 1: A FUNÇÃO "LIMPADORA" DE HORAS
+             * O que ela faz: Ela ignora o fuso horário do navegador e lê a hora exatamente como está na planilha.
+             */
+            const formatarHoraSimples = (valor) => {
+                if (!valor) return "";
+                let str = String(valor).trim();
+                if (str.startsWith("'")) str = str.substring(1); // Remove o apóstrofo da planilha
+                const match = str.match(/(\d{1,2}):(\d{2})/);
+                if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
+                return str.substring(0, 5);
+            };
+            
             // Inicialização de ícones
             lucide.createIcons();
     
@@ -601,16 +614,12 @@
                 else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
             
                 // Limpeza dos horários (trata tanto hora_inicial quanto hora_inicio)
-                const hIni = formatarHora(ext.hora_inicial || ext.hora_inicio);
-                const hFim = formatarHora(ext.hora_final || ext.hora_fim);
-            
-                // HTML do horário específico para Recepção
-                const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
-                    ? `<div class="text-[9px] font-black mt-0.5 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
-                         ${hIni} - ${hFim}
-                       </div>` 
-                    : '';
-            
+                const hIni = formatarHoraSimples(ext.hora_inicial);
+                const hFim = formatarHoraSimples(ext.hora_final);
+                
+                if (setor === "RECEPÇÃO" && hIni && hFim) {
+                    return { html: `... <div class="text-black">${hIni} - ${hFim}</div> ...` };
+                }
                 // Definição das imagens (foto1 e foto2)
                 const img1 = oficiante.foto1 || 'https://via.placeholder.com/32';
                 const img2 = oficiante.foto2;
@@ -1147,6 +1156,7 @@
     </script>
 </body>
 </html>
+
 
 
 
