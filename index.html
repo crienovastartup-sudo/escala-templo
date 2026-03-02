@@ -222,11 +222,11 @@
                     <div id="container-horarios-recepcao" class="hidden grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
                         <div class="space-y-2">
                             <label class="text-[10px] font-black text-blue-600 uppercase">Hora Inicial</label>
-                            <select id="escala-hora-inicio" class="w-full p-2.5 bg-white rounded-lg border border-blue-200 text-xs font-bold outline-none"></select>
+                            <select id="escala-hora-inicial" class="w-full p-2.5 bg-white rounded-lg border border-blue-200 text-xs font-bold outline-none"></select>
                         </div>
                         <div class="space-y-2">
                             <label class="text-[10px] font-black text-blue-600 uppercase">Hora Final</label>
-                            <select id="escala-hora-fim" class="w-full p-2.5 bg-white rounded-lg border border-blue-200 text-xs font-bold outline-none"></select>
+                            <select id="escala-hora-final" class="w-full p-2.5 bg-white rounded-lg border border-blue-200 text-xs font-bold outline-none"></select>
                         </div>
                     </div>
     
@@ -260,8 +260,8 @@
             const containerHorarios = document.getElementById('container-horarios-recepcao');
     
             function popularDropdownHorarios(turno) {
-                const inicioSel = document.getElementById('escala-hora-inicio');
-                const fimSel = document.getElementById('escala-hora-fim');
+                const inicioSel = document.getElementById('escala-hora-inicial');
+                const fimSel = document.getElementById('escala-hora-final');
                 
                 let startHour, endHour;
     
@@ -292,8 +292,8 @@
     
             function resetRecepcaoFields() {
                 containerHorarios.classList.add('hidden');
-                document.getElementById('escala-hora-inicio').innerHTML = '';
-                document.getElementById('escala-hora-fim').innerHTML = '';
+                document.getElementById('escala-hora-inicial').innerHTML = '';
+                document.getElementById('escala-hora-final').innerHTML = '';
             }
     
             setorSelect.addEventListener('change', handleRecepcaoDisplay);
@@ -314,8 +314,8 @@
                 // Ativa campos de hora se for recepção e popula os selects antes de definir o valor
                 if (item.setor === 'RECEPÇÃO') {
                     handleRecepcaoDisplay();
-                    if (item.hora_inicio) document.getElementById('escala-hora-inicio').value = item.hora_inicio;
-                    if (item.hora_fim) document.getElementById('escala-hora-fim').value = item.hora_fim;
+                    if (item.hora_inicial) document.getElementById('escala-hora-inicial').value = item.hora_inicial;
+                    if (item.hora_final) document.getElementById('escala-hora-final').value = item.hora_final;
                 }
             };
     
@@ -324,8 +324,8 @@
                 // Lógica de salvamento aqui capturando os novos campos se visíveis
                 const dados = {
                     setor: setorSelect.value,
-                    hora_inicio: document.getElementById('escala-hora-inicio').value,
-                    hora_fim: document.getElementById('escala-hora-fim').value
+                    hora_inicial: document.getElementById('escala-hora-inicial').value,
+                    hora_final: document.getElementById('escala-hora-final').value
                 };
                 console.log("Dados salvos:", dados);
                 closeModal('modal-escala');
@@ -916,6 +916,7 @@
     </script>
 </body>
 </html>
+
 
 
 
