@@ -403,6 +403,52 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+
+        // 1. Função Auxiliar de Formatação (Adicione isso no início do seu script ou antes do initCalendar)
+        const formatarHora = (valor) => {
+            if (!valor) return "";
+            // Se for uma string de data completa (ISO), extrai apenas o HH:mm
+            if (valor.includes('T')) {
+                return valor.split('T')[1].substring(0, 5);
+            }
+            // Caso contrário, retorna o valor original (assumindo que já seja HH:mm)
+            return valor.substring(0, 5);
+        };
+        
+        // 2. Função de Edição Atualizada
+        window.editEscalaItem = (item) => { 
+            // 1. Abre o modal e limpa estados anteriores
+            openEscalaModal();
+            document.getElementById('escala-modal-title').innerText = 'Editar Escala';
+            
+            // 2. Grava os IDs originais (necessário para o seu escala.gs localizar a linha certa)
+            document.getElementById('escala-id-original').value = item.id_oficiante;
+            document.getElementById('escala-data-original').value = item.data.substring(0, 10);
+            document.getElementById('escala-turno-original').value = item.turno;
+            
+            // 3. Preenche os campos básicos do formulário
+            document.getElementById('escala-oficiante').value = item.id_oficiante;
+            document.getElementById('escala-data').value = item.data.substring(0, 10);
+            document.getElementById('escala-setor').value = item.setor;
+            document.getElementById('escala-turno').value = item.turno;
+        
+            // 4. Lógica específica para o Container de Recepção
+            const containerRecepcao = document.getElementById('container-horarios-recepcao');
+            const selectHoraInicial = document.getElementById('escala-hora-inicial');
+            const selectHoraFinal = document.getElementById('escala-hora-final');
+        
+            if (item.setor && item.setor.toUpperCase().includes('RECEPÇÃO')) {
+                containerRecepcao.classList.remove('hidden');
+                
+                // Aplicamos a formatação ao preencher os selects para evitar o erro de data longa
+                selectHoraInicial.value = formatarHora(item.hora_inicial);
+                selectHoraFinal.value = formatarHora(item.hora_final);
+            } else {
+                containerRecepcao.classList.add('hidden');
+                selectHoraInicial.value = "";
+                selectHoraFinal.value = "";
+            }
+        };
         
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
@@ -520,11 +566,13 @@
                     else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
 
-                    // 1. Crie a variável do horário antes do return
-                    // Esta lógica verifica se é Recepção e se os horários existem nos dados do evento
-                    const htmlHorario = (setor === "RECEPÇÃO" && ext.hora_inicial && ext.hora_final) 
-                        ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit">
-                             ${ext.hora_inicial} - ${ext.hora_final}
+                    // Formatação dos horários para evitar o erro de data longa (1899-12-30...)
+                    const hInicial = formatarHora(ext.hora_inicial);
+                    const hFinal = formatarHora(ext.hora_final);
+                
+                    const htmlHorario = (setor.includes("RECEPÇÃO") && hInicial && hFinal) 
+                        ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
+                             ${hInicial} - ${hFinal}
                            </div>` 
                         : '';
                 
@@ -923,6 +971,7 @@
     </script>
 </body>
 </html>
+
 
 
 
