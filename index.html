@@ -670,21 +670,32 @@
             } catch (e) { return { status: "error" }; } finally { showLoading(false); }
         }
 
-       async function fetchData() {
-            const rO = await apiCall({ action: "listOficiantes" });
-            if (rO.status === "ok") {
-                // Esta linha abaixo é a que faz a mágica da ordenação
-                oficiantes = rO.data.sort((a, b) => (a.nome || "").localeCompare((b.nome || ""), 'pt-BR'));
-                
-                renderOficiantes();
-                updateOficianteSelects();
-            }
-        
-            const rE = await apiCall({ action: "listEscala" });
-            if (rE.status === "ok") {
-                escala = rE.data;
-                renderEscalaTable();
-                applyFilters();
+       // FUNÇÃO FETCHDATA ATUALIZADA E CORRIGIDA PARA ORDENAR DE VERDADE
+        async function fetchData() {
+            try {
+                // 1. Busca Oficiantes
+                const rO = await apiCall({ action: "listOficiantes" });
+                if (rO.status === "ok") {
+                    // ORDENAÇÃO INFALÍVEL (A-Z)
+                    // .trim() remove espaços antes dos nomes
+                    // .localeCompare com 'pt-BR' e sensitivity 'base' ignora acentos e maiúsculas
+                    oficiantes = rO.data.sort((a, b) => {
+                        const nomeA = (a.nome || "").trim();
+                        const nomeB = (b.nome || "").trim();
+                        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+                    });
+                    
+                    updateOficianteSelects();
+                }
+
+                // 2. Busca Escala
+                const rE = await apiCall({ action: "listEscala" });
+                if (rE.status === "ok") {
+                    escala = rE.data;
+                    renderCalendarEvents();
+                }
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
             }
         }
 
@@ -1130,6 +1141,7 @@
     </script>
 </body>
 </html>
+
 
 
 
