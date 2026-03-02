@@ -253,26 +253,24 @@
                 // REGRA DE OURO: O eventOrder procura a propriedade no nível superior do objeto do evento
                 eventOrder: "ordemTurno",
         
-                // Evento de clique para criar o efeito "flutuante"
+                // Evento de clique para criar o efeito "flutuante" puramente visual
                 eventClick: function(info) {
                     // Remove o destaque de qualquer outro card selecionado anteriormente
                     document.querySelectorAll('.event-card-selected').forEach(el => {
-                        el.classList.remove('event-card-selected', 'scale-105', 'z-50', 'shadow-xl');
+                        el.classList.remove('event-card-selected', 'scale-110', 'z-[100]', 'shadow-2xl', '-translate-y-2');
                     });
         
-                    // Adiciona classes de destaque ao card clicado
+                    // Adiciona classes de destaque ao card clicado (Efeito Flutuante)
                     const cardElement = info.el.querySelector('.event-card-custom');
                     if (cardElement) {
-                        cardElement.classList.add('event-card-selected', 'scale-105', 'z-50', 'shadow-xl');
+                        // scale-110 aumenta o tamanho, shadow-2xl dá profundidade, -translate-y-2 faz flutuar
+                        cardElement.classList.add('event-card-selected', 'scale-110', 'z-[100]', 'shadow-2xl', '-translate-y-2');
                         
-                        // Opcional: Fechar o destaque ao clicar fora (precisa de tratamento global)
+                        // Impede que o clique feche imediatamente pelo listener global
                         info.jsEvent.stopPropagation();
                     }
         
-                    // Se houver uma função de edição de escala, você pode chamá-la aqui
-                    if (typeof editEscalaItem === 'function') {
-                        editEscalaItem(info.event.extendedProps);
-                    }
+                    // A opção de edição foi removida conforme solicitado para ser apenas visual
                 },
         
                 // Garante que ao transformar dados (caso venham via link direto) a ordem seja injetada
@@ -292,14 +290,14 @@
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
         
                     return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-lg p-1.5 overflow-hidden w-full flex flex-col gap-1 transition-all duration-300">
+                        <div class="event-card-custom ${colorClass} rounded-lg p-1.5 overflow-hidden w-full flex flex-col gap-1 transition-all duration-300 ease-out cursor-pointer border shadow-sm">
                             <div class="flex items-center gap-1.5">
-                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm">
-                                <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
+                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm shrink-0">
+                                <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm -ml-3 shrink-0">
                                 <span class="font-bold text-[10px] leading-tight truncate flex-1">${arg.event.title}</span>
                             </div>
-                            <div class="text-[9px] opacity-90 font-medium truncate uppercase border-t border-black/5 pt-0.5">
-                                ${ext.turno} • ${ext.setor}
+                            <div class="text-[9px] opacity-90 font-medium truncate uppercase border-t border-black/10 pt-1 mt-0.5">
+                                <span class="inline-block bg-white/40 px-1 rounded-sm">${ext.turno}</span> • ${ext.setor}
                             </div>
                         </div>
                     `};
@@ -307,11 +305,13 @@
             });
             calendar.render();
         
-            // Listener global para remover o destaque ao clicar fora do calendário
-            document.addEventListener('click', () => {
-                document.querySelectorAll('.event-card-selected').forEach(el => {
-                    el.classList.remove('event-card-selected', 'scale-105', 'z-50', 'shadow-xl');
-                });
+            // Listener global para remover o destaque ao clicar em qualquer outra parte da tela
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.event-card-custom')) {
+                    document.querySelectorAll('.event-card-selected').forEach(el => {
+                        el.classList.remove('event-card-selected', 'scale-110', 'z-[100]', 'shadow-2xl', '-translate-y-2');
+                    });
+                }
             });
         }
 
@@ -626,6 +626,7 @@
     </script>
 </body>
 </html>
+
 
 
 
