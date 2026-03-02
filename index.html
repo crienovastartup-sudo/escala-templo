@@ -300,24 +300,7 @@
             turnoSelect.addEventListener('change', () => {
                 if (setorSelect.value === 'RECEPÇÃO') popularDropdownHorarios(turnoSelect.value);
             });
-    
-            // Atualização da função de edição para suportar os novos campos
-            window.editEscalaItem = (item) => { 
-                openEscalaModal();
-                document.getElementById('escala-modal-title').innerText = 'Editar Escala';
-                
-                document.getElementById('escala-oficiante').value = item.id_oficiante;
-                document.getElementById('escala-data').value = item.data.substring(0, 10);
-                document.getElementById('escala-setor').value = item.setor;
-                document.getElementById('escala-turno').value = item.turno;
-    
-                // Ativa campos de hora se for recepção e popula os selects antes de definir o valor
-                if (item.setor === 'RECEPÇÃO') {
-                    handleRecepcaoDisplay();
-                    if (item.hora_inicial) document.getElementById('escala-hora-inicial').value = item.hora_inicial;
-                    if (item.hora_final) document.getElementById('escala-hora-final').value = item.hora_final;
-                }
-            };
+
     
             document.getElementById('form-escala').onsubmit = (e) => {
                 e.preventDefault();
@@ -902,24 +885,45 @@
         };
 
         window.editEscalaItem = (item) => { 
+            // 1. Abre o modal e limpa estados anteriores
             openEscalaModal();
             document.getElementById('escala-modal-title').innerText = 'Editar Escala';
+            
+            // 2. Grava os IDs originais (necessário para o seu escala.gs localizar a linha certa)
             document.getElementById('escala-id-original').value = item.id_oficiante;
             document.getElementById('escala-data-original').value = item.data.substring(0, 10);
             document.getElementById('escala-turno-original').value = item.turno;
             
+            // 3. Preenche os campos básicos do formulário
             document.getElementById('escala-oficiante').value = item.id_oficiante;
             document.getElementById('escala-data').value = item.data.substring(0, 10);
             document.getElementById('escala-setor').value = item.setor;
             document.getElementById('escala-turno').value = item.turno;
-            document.getElementById('escala-hora-inicial').value = item.hora_inicial;
-            document.getElementById('escala-hora-final').value = item.hora_final;
+        
+            // 4. Lógica específica para o Container de Recepção
+            const containerRecepcao = document.getElementById('container-horarios-recepcao');
+            const selectHoraInicial = document.getElementById('escala-hora-inicial');
+            const selectHoraFinal = document.getElementById('escala-hora-final');
+        
+            if (item.setor && item.setor.toUpperCase().includes('RECEPÇÃO')) {
+                // Mostra o campo azul se for recepção
+                containerRecepcao.classList.remove('hidden');
+                // Preenche os selects com os valores que vieram da planilha
+                selectHoraInicial.value = item.hora_inicial || "";
+                selectHoraFinal.value = item.hora_final || "";
+            } else {
+                // Esconde se for outro setor
+                containerRecepcao.classList.add('hidden');
+                selectHoraInicial.value = "";
+                selectHoraFinal.value = "";
+            }
         };
-
+        
         function showLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
     </script>
 </body>
 </html>
+
 
 
 
