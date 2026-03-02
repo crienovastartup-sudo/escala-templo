@@ -671,20 +671,33 @@
         }
 
         async function fetchData() {
+            showLoading(true); // Opcional: mostrar carregando
+            
+            // 1. CARREGAR E ORDENAR OFICIANTES
             const rO = await apiCall({ action: "listOficiantes" });
             if (rO.status === "ok") {
-                oficiantes = rO.data;
+                // AQUI ESTÁ O SEGREDO: Ordenamos os dados antes de salvar na variável
+                oficiantes = rO.data.sort((a, b) => {
+                    const nomeA = (a.nome || "").toUpperCase();
+                    const nomeB = (b.nome || "").toUpperCase();
+                    return nomeA.localeCompare(nomeB, 'pt-BR');
+                });
+                
                 renderOficiantes();
-                updateOficianteSelects();
+                updateOficianteSelects(); // Esta função preenche os filtros/selects
             }
+        
+            // 2. CARREGAR ESCALAS
             const rE = await apiCall({ action: "listEscala" });
             if (rE.status === "ok") {
                 escala = rE.data;
                 renderEscalaTable();
                 applyFilters();
             }
+            
+            showLoading(false);
         }
-
+        
         function renderOficiantes() {
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
                 <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
@@ -1127,6 +1140,7 @@
     </script>
 </body>
 </html>
+
 
 
 
