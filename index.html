@@ -230,39 +230,59 @@
         }
 
         function initCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'pt-br',
-                height: 'auto',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listWeek' },
-                buttonText: { today: 'Hoje', month: 'Mês', list: 'Lista' },
-                eventContent: function(arg) {
-                    const ext = arg.event.extendedProps;
-                    const setor = (ext.setor || "").toUpperCase();
-                    const oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
+                const calendarEl = document.getElementById('calendar');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'pt-br',
+                    height: 'auto',
+                    headerToolbar: { 
+                        left: 'prev,next today', 
+                        center: 'title', 
+                        right: 'dayGridMonth,listWeek' 
+                    },
+                    buttonText: { today: 'Hoje', month: 'Mês', list: 'Lista' },
                     
-                    let colorClass = "card-default";
-                    if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
-                    else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
-                    else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
-
-                    return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-lg p-1.5 overflow-hidden w-full flex flex-col gap-1">
-                            <div class="flex items-center gap-1.5">
-                                <img src="${oficiante.foto1 || 'https://via.placeholder.com/28'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm">
-                                <img src="${oficiante.foto2 || 'https://via.placeholder.com/28'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm">
-                                <span class="font-bold text-[10px] leading-tight truncate flex-1">${arg.event.title}</span>
+                    // REGRA DE OURO: Ordena pelo peso do turno que criaremos abaixo
+                    eventOrder: "ordemTurno",
+            
+                    // Transforma os dados conforme entram no calendário
+                    eventDataTransform: function(eventData) {
+                        const pesos = {
+                            'PRIMEIRO': 1,
+                            'SEGUNDO': 2,
+                            'TERCEIRO': 3
+                        };
+                        // Adiciona a propriedade invisível 'ordemTurno' para o FullCalendar usar no eventOrder
+                        eventData.ordemTurno = pesos[eventData.turno] || 99;
+                        return eventData;
+                    },
+            
+                    eventContent: function(arg) {
+                        const ext = arg.event.extendedProps;
+                        const setor = (ext.setor || "").toUpperCase();
+                        const oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
+                        
+                        let colorClass = "card-default";
+                        if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
+                        else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
+                        else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+            
+                        return { html: `
+                            <div class="event-card-custom ${colorClass} rounded-lg p-1.5 overflow-hidden w-full flex flex-col gap-1">
+                                <div class="flex items-center gap-1.5">
+                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm">
+                                    <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
+                                    <span class="font-bold text-[10px] leading-tight truncate flex-1">${arg.event.title}</span>
+                                </div>
+                                <div class="text-[9px] opacity-90 font-medium truncate uppercase border-t border-black/5 pt-0.5">
+                                    ${ext.turno} • ${ext.setor}
+                                </div>
                             </div>
-                            <div class="text-[9px] opacity-90 font-medium truncate uppercase border-t border-black/5 pt-0.5">
-                                ${ext.turno} • ${ext.setor}
-                            </div>
-                        </div>
-                    `};
-                }
-            });
-            calendar.render();
-        }
+                        `};
+                    }
+                });
+                calendar.render();
+            }
 
         async function apiCall(payload) {
             showLoading(true);
@@ -559,4 +579,5 @@
     </script>
 </body>
 </html>
+
 
