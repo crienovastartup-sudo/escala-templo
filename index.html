@@ -500,6 +500,9 @@
                                     <span class="text-xs font-bold uppercase tracking-tighter opacity-50">Turno</span>
                                     <span class="text-sm font-black">${ext.turno}</span>
                                 </div>
+
+                                ${(setor === "RECEPÇÃO" && ext.hora_inicio) ? `<p class="">${ext.hora_inicio} às ${ext.hora_fim}</p>` : ''}
+                                
                             </div>
                         </div>
                         <div class="bg-white p-4 border-t flex justify-center">
@@ -533,6 +536,35 @@
                     if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
                     else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+
+                    // 1. Crie a variável do horário antes do return
+                    // Esta lógica verifica se é Recepção e se os horários existem nos dados do evento
+                    const htmlHorario = (setor === "RECEPÇÃO" && ext.hora_inicio && ext.hora_fim) 
+                        ? `<div class="text-[9px] font-black mt-1 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit">
+                             ${ext.hora_inicio} - ${ext.hora_fim}
+                           </div>` 
+                        : '';
+                
+                    // 2. No return, o HTML é montado usando a variável acima
+                    return { html: `
+                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 transition-all duration-300 cursor-pointer border shadow-sm ring-1 ring-black/5">
+                            <div class="flex items-center gap-2">
+                                <div class="flex shrink-0">
+                                    <img src="${oficiante.foto1 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
+                                    <img src="${oficiante.foto2 || 'https://via.placeholder.com/36'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3">
+                                </div>
+                                <!-- Div flex-col adicionada para empilhar Nome e Horário -->
+                                <div class="flex flex-col flex-1 truncate">
+                                    <span class="font-bold text-[10px] leading-tight truncate tracking-tight text-slate-800">${arg.event.title}</span>
+                                    ${htmlHorario} 
+                                </div>
+                            </div>
+                            <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1.5 flex justify-between items-center">
+                                <span>${ext.setor}</span>
+                                <span class="bg-black/10 px-1.5 py-0.5 rounded text-[8px]">${ext.turno}</span>
+                            </div>
+                        </div>
+                    `};
         
                     return { html: `
                         <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-2 transition-all duration-300 ease-out cursor-pointer border shadow-sm ring-1 ring-black/5">
@@ -884,6 +916,7 @@
     </script>
 </body>
 </html>
+
 
 
 
