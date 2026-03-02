@@ -570,7 +570,65 @@
                     else if (setor.includes("RECEPÇÃO")) colorClass = "bg-yellow-50 text-yellow-800 border-yellow-200";
                     else if (setor.includes("SELAMENTO")) colorClass = "bg-green-50 text-green-700 border-green-200";
 
-                   
+                   // 1. Função auxiliar para formatar e limpar a hora vinda do Sheets
+                    const formatarHoraParaExibicao = (valor) => {
+                        if (!valor) return "";
+                        let str = String(valor).trim();
+                        // Remove a aspa simples se ela existir no início
+                        if (str.startsWith("'")) str = str.substring(1);
+                        
+                        // Tenta extrair apenas HH:mm caso venha algo como "10:00:00" ou ISO
+                        const match = str.match(/(\d{1,2}):(\d{2})/);
+                        if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
+                        
+                        return str.substring(0, 5);
+                    };
+                    // 2. Dentro da configuração do seu calendário:
+                    // eventContent: function(arg) { ... }
+                    
+                    const renderizarCardComHorario = (arg) => {
+                        const ext = arg.event.extendedProps;
+                        const setor = (ext.setor || "").toUpperCase();
+                        
+                        // Limpeza dos horários salvos com aspa
+                        const hIni = formatarHoraParaExibicao(ext.hora_inicial);
+                        const hFim = formatarHoraParaExibicao(ext.hora_final);
+                    
+                        // Define a classe de cor baseada no setor
+                        let colorClass = "card-default";
+                        if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
+                        else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
+                        else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+                    
+                        // HTML do horário: Só aparece se for RECEPÇÃO e tiver os dois horários
+                        const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
+                            ? `<div class="text-[9px] font-black mt-0.5 bg-white/60 px-1.5 py-0.5 rounded border border-black/10 w-fit text-black">
+                                 ${hIni} - ${hFim}
+                               </div>` 
+                            : '';
+                    
+                        return { html: `
+                            <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.02] text-black">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex shrink-0">
+                                        <img src="${ext.foto1 || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10">
+                                    </div>
+                                    
+                                    <div class="flex flex-col flex-1 truncate">
+                                        <span class="font-bold text-[10px] leading-tight truncate text-black">
+                                            ${arg.event.title || 'Sem Nome'}
+                                        </span>
+                                        ${htmlHorario} 
+                                    </div>
+                                </div>
+                                
+                                <div class="text-[9px] font-bold text-black truncate uppercase border-t border-black/10 pt-1 flex justify-between items-center">
+                                    <span class="truncate pr-1">${ext.setor || 'N/A'}</span>
+                                    <span class="bg-black/10 px-1 py-0.5 rounded text-[8px] whitespace-nowrap">${ext.turno || ''}</span>
+                                </div>
+                            </div>
+                        `};
+                    };
         
                     const container = document.getElementById('calendar-popup-container');
                     const overlay = document.getElementById('calendar-popup-overlay');
@@ -1187,6 +1245,7 @@
     </script>
 </body>
 </html>
+
 
 
 
