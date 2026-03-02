@@ -854,7 +854,9 @@
                 turno: document.getElementById('escala-turno').value,
                 id_original: idOrig,
                 data_original: document.getElementById('escala-data-original').value,
-                turno_original: document.getElementById('escala-turno-original').value
+                turno_original: document.getElementById('escala-turno-original').value,
+                hora_inicial: document.getElementById('escala-hora-inicial').value,
+                hora_final: document.getElementById('escala-hora-final').value
             };
             
             const res = await apiCall(payload);
@@ -910,12 +912,15 @@
             document.getElementById('escala-data').value = item.data.substring(0, 10);
             document.getElementById('escala-setor').value = item.setor;
             document.getElementById('escala-turno').value = item.turno;
+            document.getElementById('escala-hora-inicial').value = item.hora_inicial;
+            document.getElementById('escala-hora-final').value = item.hora_final;
         };
 
         function showLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
     </script>
 </body>
 </html>
+
 
 
 
