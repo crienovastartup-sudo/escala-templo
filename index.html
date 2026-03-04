@@ -580,90 +580,65 @@
                     eventData.ordemTurno = pesosTurno[String(eventData.turno).toUpperCase()] || 99;
                     return eventData;
                 },
-
-                // 1. Função auxiliar robusta (Pode ficar em qualquer lugar do seu <script>)
-                const formatarHoraParaExibicao = (valor) => {
-                    if (!valor) return "";
-                    
-                    let str = String(valor).trim();
-                    if (str.startsWith("'")) str = str.substring(1);
-                
-                    if (str.includes('T')) {
-                        str = str.split('T')[1];
-                    }
-                    
-                    const match = str.match(/(\d{1,2}):(\d{2})/);
-                    if (match) {
-                        const horas = match[1].padStart(2, '0');
-                        const minutos = match[2].padStart(2, '0');
-                        return `${horas}:${minutos}`;
-                    }
-                    
-                    return str.length >= 5 ? str.substring(0, 5) : str;
-                };
-                
+        
                 /**
                  * PASSO 3: APLICAÇÃO NO CARD (eventContent)
                  * Localize "eventContent: function(arg) {" dentro do "initCalendar"
                  * e substitua por este bloco abaixo:
                  */
-                // 2. Substitua o seu eventContent por este bloco:
                 eventContent: function(arg) {
-                    const ext = arg.event.extendedProps;
-                    const setor = (ext.setor || "").toUpperCase();
-                    
-                    // Busca os dados dos oficiantes (ajuste 'oficiantes' para o nome da sua variável global)
-                    const oficiante = (typeof oficiantes !== 'undefined') 
-                        ? oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {}
-                        : {};
-                    
-                    // Define a cor do card
-                    let colorClass = "card-default";
-                    if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
-                    else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
-                    else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+                const ext = arg.event.extendedProps;
+                const setor = (ext.setor || "").toUpperCase();
                 
-                    // Limpa os horários da API/Planilha
-                    const hIni = formatarHoraSimples(ext.hora_inicial || ext.hora_inicial);
-                    const hFim = formatarHoraSimples(ext.hora_final || ext.hora_final);
+                // Busca o oficiante para obter foto1 e foto2
+                const oficiante = (typeof oficiantes !== 'undefined' && oficiantes.length > 0)
+                    ? oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {}
+                    : {};
                 
-                    // HTML do Horário para recepção (Texto preto em fundo branco semi-transparente)
-                    const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
-                        ? `<div class="text-[9px] font-black mt-0.5 bg-white/70 px-1.5 py-0.5 rounded border border-black/10 w-fit text-black shadow-sm">
-                             ${hIni} - ${hFim}
-                           </div>` 
-                        : '';
-                
-                    const img1 = oficiante.foto1 || 'https://via.placeholder.com/32';
-                    const img2 = oficiante.foto2;
-                
-                    return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.02] text-black">
-                            <div class="flex items-center gap-2">
-                                <div class="flex shrink-0">
-                                    <img src="${img1}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
-                                    ${img2 ? `
-                                        <img src="${img2}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
-                                    ` : ''}
-                                </div>
-                                
-                                <div class="flex flex-col flex-1 truncate">
-                                    <!-- Nome do Oficiante em Preto -->
-                                    <span class="font-bold text-[10px] leading-tight truncate text-black">
-                                        ${arg.event.title || 'Sem Nome'}
-                                    </span>
-                                    ${htmlHorario} 
-                                </div>
+                let colorClass = "card-default";
+                if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
+                else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
+                else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
+            
+                // Limpeza dos horários (trata tanto hora_inicial quanto hora_inicio)
+                const hIni = formatarHora(ext.hora_inicial || ext.hora_inicio);
+                const hFim = formatarHora(ext.hora_final || ext.hora_fim);
+            
+                // HTML do horário específico para Recepção
+                const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
+                    ? `<div class="text-[9px] font-black mt-0.5 bg-white/40 px-1.5 py-0.5 rounded border border-black/5 w-fit text-blue-900">
+                         ${hIni} - ${hFim}
+                       </div>` 
+                    : '';
+            
+                // Definição das imagens (foto1 e foto2)
+                const img1 = oficiante.foto1 || 'https://via.placeholder.com/32';
+                const img2 = oficiante.foto2;
+            
+                return { html: `
+                    <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.02]">
+                        <div class="flex items-center gap-2">
+                            <!-- Efeito de Fotos Sobrepostas (ml-3 na segunda foto) -->
+                            <div class="flex shrink-0">
+                                <img src="${img1}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
+                                ${img2 ? `
+                                    <img src="${img2}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
+                                ` : ''}
                             </div>
                             
-                            <!-- Rodapé com Setor e Turno -->
-                            <div class="text-[9px] font-bold text-black truncate uppercase border-t border-black/10 pt-1 flex justify-between items-center mt-1">
-                                <span class="truncate pr-1">${ext.setor || 'N/A'}</span>
-                                <span class="bg-black/10 px-1 py-0.5 rounded text-[8px] whitespace-nowrap">${ext.turno || ''}</span>
+                            <div class="flex flex-col flex-1 truncate">
+                                <span class="font-bold text-[10px] leading-tight truncate text-slate-800">${arg.event.title || 'Sem Nome'}</span>
+                                ${htmlHorario} 
                             </div>
                         </div>
-                    `};
-                }
+                        
+                        <div class="text-[9px] opacity-90 font-semibold truncate uppercase border-t border-black/5 pt-1 flex justify-between items-center">
+                            <span class="truncate pr-1">${ext.setor || 'N/A'}</span>
+                            <span class="bg-black/10 px-1 py-0.5 rounded text-[8px] whitespace-nowrap">${ext.turno || ''}</span>
+                        </div>
+                    </div>
+                `};
+            }
             });
             calendar.render();
         
@@ -1167,45 +1142,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
