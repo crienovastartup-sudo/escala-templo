@@ -1317,22 +1317,48 @@
             }
         
             doc.autoTable({
-                startY: 28,
-                head: head,
-                body: body,
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 1.5,
-                    valign: 'middle'
-                },
-                headStyles: {
-                    fillColor: [40,40,40]
-                },
-                columnStyles: {
-                    0: { cellWidth: 35 }
-                },
-                theme: 'grid'
-            });
+            startY: 28,
+            head: head,
+            body: body,
+            styles: {
+                fontSize: 8,
+                cellPadding: 1.5,
+                valign: 'middle'
+            },
+            headStyles: {
+                fillColor: [40,40,40],
+                textColor: 255
+            },
+            columnStyles: {
+                0: { cellWidth: 35 }
+            },
+            didParseCell: function (data) {
+        
+                // Ignora cabeçalho
+                if (data.section !== 'body') return;
+        
+                const col = data.column.index;
+        
+                // Não pintar coluna Data
+                if (col === 0) return;
+        
+                // 🔵 BATISTÉRIO
+                if (setorSelecionado === "BATISTÉRIO") {
+                    data.cell.styles.fillColor = [220, 235, 255];
+                }
+        
+                // 🟡 RECEPÇÃO
+                if (setorSelecionado === "RECEPÇÃO") {
+                    data.cell.styles.fillColor = [255, 248, 200];
+                }
+        
+                // 🌸 SELAMENTO
+                if (setorSelecionado === "SELAMENTO") {
+                    data.cell.styles.fillColor = [255, 220, 235];
+                }
+            },
+            theme: 'grid'
+        });
         
             doc.save(`relatorio_${setorSelecionado.toLowerCase()}.pdf`);
         };
@@ -1490,6 +1516,7 @@
     </script>
 </body>
 </html>
+
 
 
 
