@@ -1223,10 +1223,20 @@
                         e.turno === "PRIMEIRO" ? "1" :
                         e.turno === "SEGUNDO" ? "2" : "3";
         
-                    const nome = e.nome_oficiante;
-        
+                    let nomeFormatado = e.nome_oficiante;
+
+                    if (setorSelecionado === "RECEPÇÃO") {
+                    
+                        const horaIni = formatarHoraSimples(e.hora_inicial || e.hora_inicio);
+                        const horaFim = formatarHoraSimples(e.hora_final || e.hora_fim);
+                    
+                        if (horaIni && horaFim) {
+                            nomeFormatado = `${e.nome_oficiante} (${horaIni} às ${horaFim})`;
+                        }
+                    }
+                    
                     if (linha["T"+turnoNum]) {
-                        linha["T"+turnoNum].push(nome);
+                        linha["T"+turnoNum].push(nomeFormatado);
                     }
                 });
         
@@ -1444,6 +1454,7 @@
     </script>
 </body>
 </html>
+
 
 
 
