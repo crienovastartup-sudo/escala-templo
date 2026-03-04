@@ -227,9 +227,9 @@
                     <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-500 uppercase">Turno</label>
                         <select id="escala-turno" required class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="PRIMEIRO">Primeiro (07h-12h)</option>
-                            <option value="SEGUNDO">Segundo (12h-17h)</option>
-                            <option value="TERCEIRO">Terceiro (17h-21h)</option>
+                            <option value="PRIMEIRO">Primeiro (07h-13h)</option>
+                            <option value="SEGUNDO">Segundo (12h30-18h)</option>
+                            <option value="TERCEIRO">Terceiro (17h30-21h)</option>
                         </select>
                     </div>
     
@@ -280,9 +280,9 @@
                 
                 let startHour, endHour;
     
-                if (turno === 'PRIMEIRO') { startHour = 7; endHour = 12; }
+                if (turno === 'PRIMEIRO') { startHour = 7; endHour = 13; }
                 else if (turno === 'SEGUNDO') { startHour = 12; endHour = 18; }
-                else if (turno === 'TERCEIRO') { startHour = 18; endHour = 21; }
+                else if (turno === 'TERCEIRO') { startHour = 17; endHour = 21; }
                 else { startHour = 7; endHour = 21; }
     
                 let options = '<option value="">Selecione</option>';
@@ -1311,6 +1311,7 @@
     </script>
 </body>
 </html>
+
 
 
 
