@@ -497,16 +497,45 @@
             }
 
             // hora simples
-            const formatarHoraSimples = (valor) => {
-                if (!valor) return "";
-                try {
-                    let str = String(valor).trim();
-                    if (str.startsWith("'")) str = str.substring(1);
-                    const match = str.match(/(\d{1,2}):(\d{2})/);
-                    if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
-                    return str.substring(0, 5);
-                } catch (e) { return ""; }
-            };
+           const formatarHoraSimples = (valor) => {
+            if (!valor) return "";
+        
+            try {
+                // Se vier como Date object
+                if (valor instanceof Date) {
+                    return valor.toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                }
+        
+                let str = String(valor).trim();
+        
+                // Se vier formato ISO 1899-12-30T10:36:28.000Z
+                if (str.includes("T")) {
+                    const date = new Date(str);
+                    if (!isNaN(date)) {
+                        return date.toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
+                    }
+                }
+        
+                // Se já vier como 07:30
+                const match = str.match(/(\d{1,2}):(\d{2})/);
+                if (match) {
+                    return `${match[1].padStart(2, '0')}:${match[2]}`;
+                }
+        
+                return "";
+        
+            } catch (e) {
+                return "";
+            }
+        };
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'pt-br',
@@ -1159,6 +1188,7 @@
     </script>
 </body>
 </html>
+
 
 
 
