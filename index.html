@@ -499,45 +499,7 @@
                 document.body.insertAdjacentHTML('beforeend', modalHtml);
             }
 
-            // hora simples
-            function formatarHoraSimples(valor) {
-            
-                if (!valor) return "";
-            
-                try {
-            
-                    if (valor instanceof Date) {
-                        return valor.toLocaleTimeString('pt-BR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                        });
-                    }
-            
-                    let str = String(valor).trim();
-            
-                    if (str.includes("T")) {
-                        const date = new Date(str);
-                        if (!isNaN(date.getTime())) {
-                            return date.toLocaleTimeString('pt-BR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                            });
-                        }
-                    }
-            
-                    const match = str.match(/(\d{1,2}):(\d{2})/);
-                    if (match) {
-                        return `${match[1].padStart(2,'0')}:${match[2]}`;
-                    }
-            
-                    return "";
-            
-                } catch (e) {
-                    return "";
-                }
-            };
+           
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'pt-br',
@@ -853,6 +815,46 @@
 
         // Objeto de apoio para ordenação de turnos
         const turnosOrder = { "PRIMEIRO": 1, "SEGUNDO": 2, "TERCEIRO": 3 };
+
+         // hora simples
+            function formatarHoraSimples(valor) {
+            
+                if (!valor) return "";
+            
+                try {
+            
+                    if (valor instanceof Date) {
+                        return valor.toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
+                    }
+            
+                    let str = String(valor).trim();
+            
+                    if (str.includes("T")) {
+                        const date = new Date(str);
+                        if (!isNaN(date.getTime())) {
+                            return date.toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            });
+                        }
+                    }
+            
+                    const match = str.match(/(\d{1,2}):(\d{2})/);
+                    if (match) {
+                        return `${match[1].padStart(2,'0')}:${match[2]}`;
+                    }
+            
+                    return "";
+            
+                } catch (e) {
+                    return "";
+                }
+            };
         
         /**
          * Função auxiliar robusta para evitar "Invalid Data".
@@ -1314,6 +1316,7 @@
     </script>
 </body>
 </html>
+
 
 
 
