@@ -1162,10 +1162,11 @@
                 body: rows,
                 styles: {
                     fontSize: 7,
-                    cellPadding: 1.5,
-                    lineWidth: 0.4,          // 🔥 linhas internas mais fortes
+                    cellPadding: 0.6,      // 🔥 menos espaço interno
+                    lineWidth: 0.4,
                     lineColor: [0,0,0],
-                    valign: 'middle'
+                    valign: 'middle',
+                    minCellHeight: 4       // 🔥 reduz altura mínima da linha
                 },
                 headStyles: {
                     fillColor: [40,40,40],
@@ -1524,6 +1525,7 @@
     </script>
 </body>
 </html>
+
 
 
 
