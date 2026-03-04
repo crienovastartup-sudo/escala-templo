@@ -1101,16 +1101,19 @@
         
                     if (e.setor === "RECEPÇÃO" && turnoNum !== "3") {
 
-                        const horaIni = formatarHoraSimples(e.hora_inicial || e.hora_inicio);
-                        const horaFim = formatarHoraSimples(e.hora_final || e.hora_fim);
+                        if (linha["REC"+turnoNum]) {
                     
-                        const nomeFormatado = (horaIni && horaFim)
-                            ? `${e.nome_oficiante} (${horaIni} às ${horaFim})`
-                            : e.nome_oficiante;
+                            const horaIni = formatarHoraSimples(e.hora_inicial || e.hora_inicio);
+                            const horaFim = formatarHoraSimples(e.hora_final || e.hora_fim);
                     
-                        linha["REC"+turnoNum].push(nomeFormatado);
+                            const nomeFormatado = (horaIni && horaFim)
+                                ? `${e.nome_oficiante} (${horaIni} às ${horaFim})`
+                                : e.nome_oficiante;
+                    
+                            linha["REC"+turnoNum].push(nomeFormatado);
+                        }
                     }
-        
+                    
                     if (e.setor === "SELAMENTO") {
                         linha["SEL"+turnoNum].push(e.nome_oficiante);
                     }
@@ -1311,6 +1314,7 @@
     </script>
 </body>
 </html>
+
 
 
 
