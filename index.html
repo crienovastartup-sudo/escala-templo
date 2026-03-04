@@ -1023,7 +1023,9 @@
         
             oficiantesOrdenados.forEach(([id, nome]) => {
                 if (!id) return;
-                const itens = rawData.filter(e => e.id_oficiante === id).sort((a,b) => {
+                const itens = rawData.filter(e => 
+                        String(e.id_oficiante).trim() === String(id).trim()
+                    ).sort((a,b) => {
                     const dataA = (a.data || "").toString();
                     const dataB = (b.data || "").toString();
                     if (dataA !== dataB) return dataA.localeCompare(dataB);
@@ -1465,6 +1467,7 @@
     </script>
 </body>
 </html>
+
 
 
 
