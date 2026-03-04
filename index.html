@@ -96,6 +96,9 @@
                     <button onclick="relatorioEscalaPorOficiante()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
                         <i data-lucide="user-check" class="w-4 h-4"></i> Por Oficiante
                     </button>
+                    <button onclick="relatorioEscalaSetores()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
+                        <i data-lucide="table" class="w-4 h-4"></i> Por Setor
+                    </button>
                 </div>
             </div>
             <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -1039,7 +1042,114 @@
             });
             doc.save("escala_por_oficiante.pdf");
         };
-
+        
+        window.relatorioEscalaSetores = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape'); // Paisagem para caber todas colunas
+        
+            const rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
+        
+            if (!rawData.length) {
+                alert("Nenhum dado encontrado.");
+                return;
+            }
+        
+            // Ordena por data
+            rawData.sort((a,b)=> (a.data || "").localeCompare(b.data || ""));
+        
+            // Agrupar por data
+            const grouped = {};
+            rawData.forEach(e => {
+                const d = e.data.substring(0,10);
+                if (!grouped[d]) grouped[d] = [];
+                grouped[d].push(e);
+            });
+        
+            doc.setFontSize(16);
+            doc.text("Escala Geral por Setor", 14, 15);
+        
+            doc.setFontSize(10);
+            doc.text(`Período: ${calendar.view.title}`, 14, 22);
+        
+            const rows = [];
+        
+            Object.keys(grouped).sort().forEach(dateKey => {
+        
+                const info = formatarDataComDia(dateKey);
+        
+                const linha = {
+                    data: `${info.dataFormatada}\n${info.diaSemana}`,
+                    BAT1: [], BAT2: [], BAT3: [],
+                    REC1: [], REC2: [], REC3: [],
+                    SEL1: [], SEL2: [], SEL3: []
+                };
+        
+                grouped[dateKey].forEach(e => {
+        
+                    const turnoNum = 
+                        e.turno === "PRIMEIRO" ? "1" :
+                        e.turno === "SEGUNDO" ? "2" : "3";
+        
+                    if (e.setor === "BATISTÉRIO") {
+                        linha["BAT"+turnoNum].push(e.nome_oficiante);
+                    }
+        
+                    if (e.setor === "RECEPÇÃO") {
+                        const hIni = formatarHora(e.hora_inicial);
+                        const hFim = formatarHora(e.hora_final);
+        
+                        const nomeFormatado = (hIni && hFim)
+                            ? `${e.nome_oficiante} (${hIni} às ${hFim})`
+                            : e.nome_oficiante;
+        
+                        linha["REC"+turnoNum].push(nomeFormatado);
+                    }
+        
+                    if (e.setor === "SELAMENTO") {
+                        linha["SEL"+turnoNum].push(e.nome_oficiante);
+                    }
+        
+                });
+        
+                rows.push([
+                    linha.data,
+                    linha.BAT1.join("\n"),
+                    linha.BAT2.join("\n"),
+                    linha.BAT3.join("\n"),
+                    linha.REC1.join("\n"),
+                    linha.REC2.join("\n"),
+                    linha.REC3.join("\n"),
+                    linha.SEL1.join("\n"),
+                    linha.SEL2.join("\n"),
+                    linha.SEL3.join("\n")
+                ]);
+            });
+        
+            doc.autoTable({
+                startY: 28,
+                head: [[
+                    "Data",
+                    "Bat 1", "Bat 2", "Bat 3",
+                    "Rec 1", "Rec 2", "Rec 3",
+                    "Sel 1", "Sel 2", "Sel 3"
+                ]],
+                body: rows,
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [40,40,40]
+                },
+                columnStyles: {
+                    0: { cellWidth: 30 }
+                },
+                theme: 'grid'
+            });
+        
+            doc.save("escala_por_setor.pdf");
+        };
         
         // --- ACTIONS ---
 
@@ -1194,6 +1304,7 @@
     </script>
 </body>
 </html>
+
 
 
 
