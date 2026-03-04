@@ -80,6 +80,7 @@
                         <option value="">Todos Turnos</option>
                         <option value="PRIMEIRO">Primeiro</option>
                         <option value="SEGUNDO">Segundo</option>
+                        <option value="SEGUNDO PARC">Segundo Parcial</option>
                         <option value="TERCEIRO">Terceiro</option>
                     </select>
                     <select id="filter-oficiante" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
@@ -230,6 +231,7 @@
                         <select id="escala-turno" required class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="PRIMEIRO">Primeiro (07h-13h)</option>
                             <option value="SEGUNDO">Segundo (12h30-18h)</option>
+                            <option value="SEGUNDO PARC">Segundo Parcial (12h30-18h)</option>
                             <option value="TERCEIRO">Terceiro (17h30-21h)</option>
                         </select>
                     </div>
@@ -283,6 +285,7 @@
     
                 if (turno === 'PRIMEIRO') { startHour = 7; endHour = 13; }
                 else if (turno === 'SEGUNDO') { startHour = 12; endHour = 18; }
+                else if (turno === 'SEGUNDO PARC') { startHour = 12; endHour = 18; }    
                 else if (turno === 'TERCEIRO') { startHour = 17; endHour = 21; }
                 else { startHour = 7; endHour = 21; }
     
@@ -1525,6 +1528,7 @@
     </script>
 </body>
 </html>
+
 
 
 
