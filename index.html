@@ -777,7 +777,7 @@
             if (!calendar) return;
             calendar.removeAllEvents();
         
-            const pesosTurno = { 'PRIMEIRO': 1, 'SEGUNDO': 2, 'TERCEIRO': 3 };
+            const pesosTurno = { 'PRIMEIRO': 1, 'SEGUNDO': 2, 'SEGUNDO PARC': 3 , 'TERCEIRO': 4 };
         
             escala.filter(item => 
                 (!fS || item.setor === fS) && 
@@ -819,7 +819,7 @@
         // --- RELATÓRIOS PDF ATUALIZADOS ---
 
         // Objeto de apoio para ordenação de turnos
-        const turnosOrder = { "PRIMEIRO": 1, "SEGUNDO": 2, "TERCEIRO": 3 };
+        const turnosOrder = { "PRIMEIRO": 1, "SEGUNDO": 2, "SEGUNDO PARC": 3, "TERCEIRO": 4 };
 
          // hora simples
             function formatarHoraSimples(valor) {
@@ -1528,6 +1528,7 @@
     </script>
 </body>
 </html>
+
 
 
 
