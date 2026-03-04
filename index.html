@@ -586,68 +586,66 @@
                  * Localize "eventContent: function(arg) {" dentro do "initCalendar"
                  * e substitua por este bloco abaixo:
                  */
-                // 1. Mantenha esta função fora da configuração do calendário
+                // 1. Certifique-se de que esta função existe no seu script (fora do calendário)
                 const formatarHoraSimples = (valor) => {
                     if (!valor) return "";
-                    let str = String(valor).trim();
-                    if (str.startsWith("'")) str = str.substring(1);
-                    
-                    // Captura apenas HH:mm ignorando qualquer texto de data ou GMT
-                    const match = str.match(/(\d{1,2}):(\d{2})/);
-                    if (match) {
-                        return `${match[1].padStart(2, '0')}:${match[2]}`;
-                    }
-                    return str.substring(0, 5);
+                    try {
+                        let str = String(valor).trim();
+                        if (str.startsWith("'")) str = str.substring(1);
+                        const match = str.match(/(\d{1,2}):(\d{2})/);
+                        if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
+                        return str.substring(0, 5);
+                    } catch (e) { return ""; }
                 };
                 
-                // 2. Substitua o seu eventContent por este bloco:
+                // 2. SUBSTITUA O SEU 'eventContent' POR ESTE BLOCO:
                 eventContent: function(arg) {
-                    // Tenta acessar as propriedades, mas define um objeto vazio caso dê erro
+                    // PROTEÇÃO INICIAL: Se não houver evento, retorna vazio para não travar a tela
+                    if (!arg || !arg.event) return { html: '' };
+                
                     const ext = arg.event.extendedProps || {};
                     const setor = (ext.setor || "").toUpperCase();
                     
-                    // BUSCA DE OFICIANTES COM PROTEÇÃO (Safe Check)
-                    // Se 'oficiantes' não estiver definido no momento do render, usamos um objeto vazio
-                    let oficiante = {};
-                    try {
-                        if (typeof oficiantes !== 'undefined' && Array.isArray(oficiantes)) {
-                            oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
-                        }
-                    } catch (e) {
-                        console.warn("Aguardando carregamento da lista de oficiantes...");
+                    // BUSCA SEGURA NA API DE OFICIANTES
+                    // Verifica se a variável 'oficiantes' existe e é uma lista
+                    let dadosOficiante = {};
+                    if (typeof oficiantes !== 'undefined' && Array.isArray(oficiantes)) {
+                        // Tenta encontrar o oficiante pelo ID que vem da escala
+                        dadosOficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
                     }
-                    
-                    // Define a cor do card
+                
+                    // LÓGICA DE CORES
                     let colorClass = "card-default";
                     if (setor.includes("BATISTÉRIO")) colorClass = "card-batisterio";
                     else if (setor.includes("RECEPÇÃO")) colorClass = "card-recepcao";
                     else if (setor.includes("SELAMENTO")) colorClass = "card-selamento";
                 
-                    // Limpa os horários da API/Planilha
+                    // FORMATAÇÃO DE HORÁRIOS (Limpando a sujeira da API)
                     const hIni = formatarHoraSimples(ext.hora_inicial || ext.hora_inicio);
                     const hFim = formatarHoraSimples(ext.hora_final || ext.hora_fim);
                 
-                    // HTML do Horário para recepção
                     const htmlHorario = (setor === "RECEPÇÃO" && hIni && hFim) 
                         ? `<div class="text-[9px] font-black mt-0.5 bg-white/70 px-1.5 py-0.5 rounded border border-black/10 w-fit text-black shadow-sm">
                              ${hIni} - ${hFim}
                            </div>` 
                         : '';
                 
-                    // Fotos com Fallback
-                    const img1 = oficiante.foto1 || 'https://via.placeholder.com/32';
-                    const img2 = oficiante.foto2;
+                    // DEFINIÇÃO DE FOTOS COM BACKUP
+                    const fotoPrincipal = dadosOficiante.foto1 || 'https://via.placeholder.com/32';
+                    const fotoSecundaria = dadosOficiante.foto2 || null;
                 
                     return { html: `
-                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.02] text-black">
+                        <div class="event-card-custom ${colorClass} rounded-xl p-1.5 overflow-hidden w-full flex flex-col gap-1 border shadow-sm ring-1 ring-black/5 text-black">
                             <div class="flex items-center gap-2">
+                                <!-- Área das Fotos -->
                                 <div class="flex shrink-0">
-                                    <img src="${img1}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
-                                    ${img2 ? `
-                                        <img src="${img2}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
+                                    <img src="${fotoPrincipal}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm z-10" onerror="this.src='https://via.placeholder.com/32'">
+                                    ${fotoSecundaria ? `
+                                        <img src="${fotoSecundaria}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm -ml-3 z-0" onerror="this.style.display='none'">
                                     ` : ''}
                                 </div>
                                 
+                                <!-- Informações Principais -->
                                 <div class="flex flex-col flex-1 truncate">
                                     <span class="font-bold text-[10px] leading-tight truncate text-black">
                                         ${arg.event.title || 'Sem Nome'}
@@ -656,9 +654,10 @@
                                 </div>
                             </div>
                             
+                            <!-- Rodapé do Card -->
                             <div class="text-[9px] font-bold text-black truncate uppercase border-t border-black/10 pt-1 flex justify-between items-center mt-1">
                                 <span class="truncate pr-1">${ext.setor || 'N/A'}</span>
-                                <span class="bg-black/10 px-1 py-0.5 rounded text-[8px] whitespace-nowrap">${ext.turno || ''}</span>
+                                <span class="bg-black/10 px-1 py-0.5 rounded text-[8px] whitespace-nowrap text-black">${ext.turno || ''}</span>
                             </div>
                         </div>
                     `};
@@ -1166,4 +1165,5 @@
     </script>
 </body>
 </html>
+
 
