@@ -1419,7 +1419,7 @@
         document.getElementById('form-escala').onsubmit = async (e) => {
             e.preventDefault();
             const ofi = document.getElementById('escala-oficiante');
-            const idOrig = document.getElementById('escala-id-original').value;
+            const idOrig = String(document.getElementById('escala-id-original').value || "").trim()
             
             const payload = {
                 action: idOrig ? "updateEscala" : "addEscala",
@@ -1516,6 +1516,7 @@
     </script>
 </body>
 </html>
+
 
 
 
