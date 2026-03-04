@@ -1101,11 +1101,11 @@
         
                     if (e.setor === "RECEPÇÃO" && turnoNum !== "3") {
 
-                        const hIni = formatarHora(e.hora_inicial);
-                        const hFim = formatarHora(e.hora_final);
+                        const horaIni = formatarHoraSimples(e.hora_inicial || e.hora_inicio);
+                        const horaFim = formatarHoraSimples(e.hora_final || e.hora_fim);
                     
-                        const nomeFormatado = (hIni && hFim)
-                            ? `${e.nome_oficiante} (${hIni} às ${hFim})`
+                        const nomeFormatado = (horaIni && horaFim)
+                            ? `${e.nome_oficiante} (${horaIni} às ${horaFim})`
                             : e.nome_oficiante;
                     
                         linha["REC"+turnoNum].push(nomeFormatado);
@@ -1311,6 +1311,7 @@
     </script>
 </body>
 </html>
+
 
 
 
