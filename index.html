@@ -1085,7 +1085,7 @@
                 const linha = {
                     data: `${info.dataFormatada} ${info.diaSemana}`,
                     BAT1: [], BAT2: [], BAT3: [],
-                    REC1: [], REC2: [], REC3: [],
+                    REC1: [], REC2: [],
                     SEL1: [], SEL2: [], SEL3: []
                 };
         
@@ -1099,14 +1099,15 @@
                         linha["BAT"+turnoNum].push(e.nome_oficiante);
                     }
         
-                    if (e.setor === "RECEPÇÃO") {
+                    if (e.setor === "RECEPÇÃO" && turnoNum !== "3") {
+
                         const hIni = formatarHora(e.hora_inicial);
                         const hFim = formatarHora(e.hora_final);
-        
+                    
                         const nomeFormatado = (hIni && hFim)
                             ? `${e.nome_oficiante} (${hIni} às ${hFim})`
                             : e.nome_oficiante;
-        
+                    
                         linha["REC"+turnoNum].push(nomeFormatado);
                     }
         
@@ -1123,7 +1124,6 @@
                     linha.BAT3.join("\n"),
                     linha.REC1.join("\n"),
                     linha.REC2.join("\n"),
-                    linha.REC3.join("\n"),
                     linha.SEL1.join("\n"),
                     linha.SEL2.join("\n"),
                     linha.SEL3.join("\n")
@@ -1135,7 +1135,7 @@
                 head: [[
                     "Data",
                     "Bat 1", "Bat 2", "Bat 3",
-                    "Rec 1", "Rec 2", "Rec 3",
+                    "Rec 1", "Rec 2",
                     "Sel 1", "Sel 2", "Sel 3"
                 ]],
                 body: rows,
@@ -1311,6 +1311,7 @@
     </script>
 </body>
 </html>
+
 
 
 
