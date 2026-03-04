@@ -554,6 +554,9 @@
                     const ext = info.event.extendedProps;
                     const oficiante = oficiantes.find(o => String(o.id) === String(ext.id_oficiante)) || {};
                     const setor = (ext.setor || "").toUpperCase();
+
+                    const horaIni = formatarHoraSimples(ext.hora_inicial || ext.hora_inicio);
+                    const horaFim = formatarHoraSimples(ext.hora_final || ext.hora_fim);
                     
                     // Formatação da Data e Dia da Semana
                     const dataObj = new Date(info.event.start);
@@ -595,7 +598,10 @@
                                     <span class="text-sm font-black">${ext.turno}</span>
                                 </div>
 
-                                ${(setor === "RECEPÇÃO" && ext.hora_inicial) ? `<p class="">${ext.hora_inicial} às ${ext.hora_final}</p>` : ''}
+                                ${(setor === "RECEPÇÃO" && horaIni && horaFim) ? 
+                                    `<p class="text-sm font-bold mt-3">${horaIni} às ${horaFim}</p>` 
+                                : ''}
+                                
                                 
                             </div>
                         </div>
@@ -1188,6 +1194,7 @@
     </script>
 </body>
 </html>
+
 
 
 
