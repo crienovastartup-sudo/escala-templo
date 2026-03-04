@@ -87,9 +87,7 @@
                     </select>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="relatorioCalendarioLista()" class="bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Lista
-                    </button>
+                    
                     <button onclick="relatorioCalendarioAgrupadoData()" class="bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 hover:bg-slate-700 transition-all">
                         <i data-lucide="layers" class="w-4 h-4"></i> Por Data
                     </button>
@@ -1003,7 +1001,19 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
-            const oficiantesIds = [...new Set(rawData.map(e => e.id_oficiante))];
+           // Agrupa por ID e pega também o nome
+            const oficiantesMap = {};
+            
+            rawData.forEach(e => {
+                if (!e.id_oficiante) return;
+                if (!oficiantesMap[e.id_oficiante]) {
+                    oficiantesMap[e.id_oficiante] = e.nome_oficiante || "Oficiante s/ nome";
+                }
+            });
+            
+            // Converte para array e ordena alfabeticamente pelo nome
+            const oficiantesOrdenados = Object.entries(oficiantesMap)
+                .sort((a, b) => a[1].localeCompare(b[1], 'pt-BR', { sensitivity: 'base' }));
         
             doc.setFontSize(16); doc.text("Escala por Oficiante", 14, 15);
             doc.setFontSize(10); 
@@ -1011,7 +1021,7 @@
             doc.text(periodo, 14, 22);
             let y = 30;
         
-            oficiantesIds.forEach(id => {
+            oficiantesOrdenados.forEach(([id, nome]) => {
                 if (!id) return;
                 const itens = rawData.filter(e => e.id_oficiante === id).sort((a,b) => {
                     const dataA = (a.data || "").toString();
@@ -1021,7 +1031,7 @@
                 });
                 
                 if (itens.length === 0) return;
-                const nome = itens[0].nome_oficiante || "Oficiante s/ nome";
+                //const nome = itens[0].nome_oficiante || "Oficiante s/ nome";
         
                 if(y > 230) { doc.addPage(); y = 20; }
         
@@ -1143,9 +1153,9 @@
                 startY: 28,
                 head: [[
                     "Data",
-                    "Bat 1", "Bat 2", "Bat 3",
-                    "Rec 1", "Rec 2",
-                    "Sel 1", "Sel 2", "Sel 3"
+                    "Bat Turno 1", "Bat Turno 2", "Bat Turno 3",
+                    "Rec Turno 1", "Rec Turno 2",
+                    "Sel Turno 1", "Sel Turno 2", "Sel Turno 3"
                 ]],
                 body: rows,
                 styles: {
@@ -1250,7 +1260,7 @@
         
             if (setorSelecionado === "BATISTÉRIO") {
         
-                head = [["Data", "Bat 1", "Bat 2", "Bat 3"]];
+                head = [["Data", "Bat Turno 1", "Bat Turno 2", "Bat Turno 3"]];
         
                 body = rows.map(l => [
                     l.data,
@@ -1261,7 +1271,7 @@
         
             } else if (setorSelecionado === "RECEPÇÃO") {
         
-                head = [["Data", "Rec 1", "Rec 2"]];
+                head = [["Data", "Rec Turno 1", "Rec Turno 2"]];
         
                 body = rows.map(l => [
                     l.data,
@@ -1271,7 +1281,7 @@
         
             } else if (setorSelecionado === "SELAMENTO") {
         
-                head = [["Data", "Sel 1", "Sel 2", "Sel 3"]];
+                head = [["Data", "Sel Turno 1", "Sel Turno 2", "Sel Turno 3"]];
         
                 body = rows.map(l => [
                     l.data,
@@ -1455,6 +1465,7 @@
     </script>
 </body>
 </html>
+
 
 
 
