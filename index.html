@@ -1002,22 +1002,6 @@
         
         window.relatorioEscalaPorOficiante = function() {
             const { jsPDF } = window.jspdf;
-
-            // 🔹 Data e hora de geração
-                const agora = new Date();
-                const dataGeracao = agora.toLocaleDateString('pt-BR') + " às " +
-                                    agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                
-                // Pega largura da página
-                const pageWidth = doc.internal.pageSize.getWidth();
-                
-                doc.setFontSize(9);
-                doc.text(
-                    `Gerado em: ${dataGeracao}`,
-                    pageWidth - 14,   // margem direita
-                    10,               // altura no topo
-                    { align: 'right' }
-                );
             
             const doc = new jsPDF();
             const rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
@@ -1091,6 +1075,23 @@
         window.relatorioEscalaSetores = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape'); // Paisagem para caber todas colunas
+             // 🔹 Data e hora de geração
+                const agora = new Date();
+                const dataGeracao = agora.toLocaleDateString('pt-BR') + " às " +
+                                    agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                // Pega largura da página
+                const pageWidth = doc.internal.pageSize.getWidth();
+                
+                doc.setFontSize(9);
+                doc.text(
+                    `Gerado em: ${dataGeracao}`,
+                    pageWidth - 14,
+                    10,
+                    { align: 'right' }
+                );
+            
+            
         
             const rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
         
@@ -1555,6 +1556,7 @@
     </script>
 </body>
 </html>
+
 
 
 
