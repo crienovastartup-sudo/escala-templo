@@ -444,7 +444,8 @@
                 div.className = 'flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:shadow-sm transition-all';
                 
                 // Formatar data para exibição
-                const [ano, mes, dia] = item.data.split("-");
+                const dataLimpa = item.data.split("T")[0];
+                const [ano, mes, dia] = dataLimpa.split("-");
                 const dataFormatada = `${dia}/${mes}/${ano}`;
                 
                 div.innerHTML = `
@@ -1656,6 +1657,7 @@
     </script>
 </body>
 </html>
+
 
 
 
