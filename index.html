@@ -179,12 +179,12 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Foto 1</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Foto Masculina</label>
                         <input type="file" id="oficiante-foto1" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
                         <div id="prev-foto1" class="hidden text-[10px] text-blue-600 mt-1 truncate">Arquivo já vinculado</div>
                     </div>
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Foto 2</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Foto Feminina</label>
                         <input type="file" id="oficiante-foto2" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
                         <div id="prev-foto2" class="hidden text-[10px] text-blue-600 mt-1 truncate">Arquivo já vinculado</div>
                     </div>
@@ -1556,11 +1556,21 @@
                 selectHoraFinal.value = "";
             }
         };
+
+        document.addEventListener("DOMContentLoaded", function(){
+
+            document.getElementById("oficiante-nome").addEventListener("input", function(){
+                this.value = this.value.toUpperCase();
+            });
+        
+        });
+
         
         function showLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
     </script>
 </body>
 </html>
+
 
 
 
