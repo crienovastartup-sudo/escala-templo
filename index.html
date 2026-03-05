@@ -374,9 +374,11 @@
         window.onload = () => {
             lucide.createIcons();
             initCalendar();
-            fetchData();
             setupListeners();
             switchTab('calendar');
+        
+            // API por último
+            fetchData();
         };
 
         function setupListeners() {
@@ -737,11 +739,26 @@
 
         
         async function apiCall(payload) {
-            showLoading(true);
+
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    mode: "cors",
+                    body: JSON.stringify(payload)
+                });
+        
                 return await res.json();
-            } catch (e) { return { status: "error" }; } finally { showLoading(false); }
+        
+            } catch (e) {
+        
+                console.error("Erro API:", e);
+                return { status: "error" };
+        
+            }
         }
 
         //Preenche filtro oficiantes gestão escala
@@ -1543,7 +1560,13 @@
             };
             
             const res = await apiCall(payload);
-            if (res.status === "ok") { closeModal('modal-oficiante'); fetchData(); e.target.reset(); }
+            if (res.status === "ok") { 
+                oficiantes.push(payload);   // adiciona localmente
+                renderOficiantes();
+            
+                closeModal('modal-oficiante'); 
+                e.target.reset(); 
+            }
         };
 
         document.getElementById('form-escala').onsubmit = async (e) => {
@@ -1566,20 +1589,41 @@
             };
             
             const res = await apiCall(payload);
-            if (res.status === "ok") { closeModal('modal-escala'); fetchData(); }
+            if (res.status === "ok") {
+            
+                escala.push(payload);     // adiciona localmente
+                renderGestaoEscala();
+            
+                closeModal('modal-escala');
+            }
+         
         };
 
         window.deleteOficiante = async (id) => {
             if(confirm("Deseja realmente excluir este oficiante? Isso não removerá escalas passadas, mas impedirá novas.")) {
                 const res = await apiCall({ action: "deleteOficiante", id });
-                if(res.status === "ok") fetchData();
+
+                if(res.status === "ok"){
+                
+                    oficiantes = oficiantes.filter(o => o.id != id);
+                
+                    renderOficiantes();
+                }
             }
         };
 
         window.deleteEscalaItem = async (id, data, turno) => {
             if(confirm("Remover este item da escala?")) {
                 const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
-                if(res.status === "ok") fetchData();
+
+                if(res.status === "ok"){
+                
+                    escala = escala.filter(e =>
+                        !(e.id_oficiante == id && e.data == data && e.turno == turno)
+                    );
+
+                    renderGestaoEscala();
+                }
             }
         };
 
@@ -1657,6 +1701,7 @@
     </script>
 </body>
 </html>
+
 
 
 
