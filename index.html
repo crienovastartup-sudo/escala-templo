@@ -1212,30 +1212,35 @@
                     }
                 },
                 didParseCell: function (data) {
+
+                const col = data.column.index;
             
-                    const col = data.column.index;
+                // 🔥 DATA maior
+                if (data.section === 'body' && col === 0) {
+                    data.cell.styles.fontSize = 9;
+                    data.cell.styles.fontStyle = 'bold';
+                }
             
-                    // 🔥 Bordas externas mais fortes
-                    data.cell.styles.lineWidth = 0.4;
+                // Bordas
+                data.cell.styles.lineWidth = 0.4;
             
-                    // Ignora cabeçalho para cores
-                    if (data.section !== 'body') return;
+                if (data.section !== 'body') return;
             
-                    // 🔵 BATISTÉRIO
-                    if (col >= 1 && col <= 3) {
-                        data.cell.styles.fillColor = [220, 235, 255];
-                    }
+                // 🔵 BATISTÉRIO
+                if (col >= 1 && col <= 3) {
+                    data.cell.styles.fillColor = [220, 235, 255];
+                }
             
-                    // 🟡 RECEPÇÃO
-                    if (col >= 4 && col <= 5) {
-                        data.cell.styles.fillColor = [255, 248, 200];
-                    }
+                // 🟡 RECEPÇÃO
+                if (col >= 4 && col <= 5) {
+                    data.cell.styles.fillColor = [255, 248, 200];
+                }
             
-                    // 🌸 SELAMENTO
-                    if (col >= 6 && col <= 8) {
-                        data.cell.styles.fillColor = [255, 220, 235];
-                    }
-                },
+                // 🌸 SELAMENTO
+                if (col >= 6 && col <= 8) {
+                    data.cell.styles.fillColor = [255, 220, 235];
+                }
+            },
                 theme: 'grid'
             });
         
@@ -1556,6 +1561,7 @@
     </script>
 </body>
 </html>
+
 
 
 
