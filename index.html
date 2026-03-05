@@ -391,30 +391,16 @@
         function renderGestaoEscala() {
             const container = document.getElementById('gestao-escala-lista');
             const monthFilter = document.getElementById('gestao-month-filter')?.value; // Ex: "2024-05"
-            
-            if (!container) return;
-            container.innerHTML = '';
-        
-            // Filtrar a escala com base no mês escolhido (se houver filtro)
-            const escalaFiltrada = escala.filter(item => {
-                if (!monthFilter) return true;
-                // Compara o ano-mês da data (YYYY-MM) com o valor do filtro
-                return item.data.substring(0, 7) === monthFilter;
-            });
-        
-            // Ordenar por data (mais recente primeiro)
-            escalaFiltrada.sort((a, b) => new Date(b.data) - new Date(a.data));
-        
-            if (escalaFiltrada.length === 0) {
-                container.innerHTML = '<div class="p-4 text-center opacity-50 text-xs">Nenhum registro encontrado para este período.</div>';
-                return;
-            }
-            //gestao escala 
+             //gestao escala 
             const filtroMes = document.getElementById("gestao-month-filter").value;
             const filtroOficiante = document.getElementById("gestao-oficiante-filter").value;
             const filtroTurno = document.getElementById("gestao-turno-filter").value;
             
-            let dadosFiltrados = escalaData;
+            let dadosFiltrados = escala;
+            
+            if (!container) return;
+            container.innerHTML = '';
+           
             
             //filtro no mes
             if (filtroMes) {
@@ -443,7 +429,14 @@
             
             }
             
-            escalaFiltrada.forEach(item => {
+            dadosFiltrados.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            if (dadosFiltrados.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center opacity-50 text-xs">Nenhum registro encontrado para este período.</div>';
+                return;
+            }
+            
+           dadosFiltrados.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:shadow-sm transition-all';
                 
@@ -746,6 +739,23 @@
             } catch (e) { return { status: "error" }; } finally { showLoading(false); }
         }
 
+        //Preenche filtro oficiantes gestão escala
+        function carregarFiltroOficiantes(oficiantes){
+        
+            const select = document.getElementById("gestao-oficiante-filter");
+        
+            oficiantes.forEach(o => {
+        
+                const op = document.createElement("option");
+                op.value = o.id;
+                op.textContent = o.nome;
+        
+                select.appendChild(op);
+        
+            });
+        
+        } 
+
        // FUNÇÃO FETCHDATA ATUALIZADA E CORRIGIDA PARA ORDENAR DE VERDADE
         async function fetchData() {
             try {
@@ -762,6 +772,7 @@
                     });
                     renderOficiantes();
                     updateOficianteSelects();
+                    carregarFiltroOficiantes(oficiantes);
                 }
 
                 // 2. Busca Escala
@@ -792,23 +803,6 @@
             `).join('');
             lucide.createIcons();
         }
-
-        //Preenche filtro oficiantes gestão escala
-        function carregarFiltroOficiantes(oficiantes){
-        
-            const select = document.getElementById("gestao-oficiante-filter");
-        
-            oficiantes.forEach(o => {
-        
-                const op = document.createElement("option");
-                op.value = o.id;
-                op.textContent = o.nome;
-        
-                select.appendChild(op);
-        
-            });
-        
-        } carregarFiltroOficiantes(oficiantes);
 
         
         function renderEscalaTable() {
@@ -1651,11 +1645,14 @@
         
         });
 
+        document.querySelectorAll("#gestao-month-filter,#gestao-oficiante-filter,#gestao-turno-filter")
+    	.forEach(el => el.addEventListener("change", renderGestaoEscala));
         
         function showLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
     </script>
 </body>
 </html>
+
 
 
 
