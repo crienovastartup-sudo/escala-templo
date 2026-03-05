@@ -1096,6 +1096,12 @@
         
             doc.setFontSize(9);
             doc.text(`Período: ${calendar.view.title}`, 14, 16);
+
+            const agora = new Date();
+            const dataGeracao = agora.toLocaleDateString('pt-BR') + " às " +
+                                agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            doc.text(`Gerado em: ${dataGeracao}`, 14, 21);
         
             const rows = [];
         
@@ -1532,6 +1538,7 @@
     </script>
 </body>
 </html>
+
 
 
 
