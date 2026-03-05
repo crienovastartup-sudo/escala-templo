@@ -781,34 +781,45 @@
        // FUNÇÃO FETCHDATA ATUALIZADA E CORRIGIDA PARA ORDENAR DE VERDADE
         async function fetchData() {
             try {
-                // 1. Busca Oficiantes
+        
+                // OFICIANTES
                 const rO = await apiCall({ action: "listOficiantes" });
+        
                 if (rO.status === "ok") {
-                    // ORDENAÇÃO INFALÍVEL (A-Z)
-                    // .trim() remove espaços antes dos nomes
-                    // .localeCompare com 'pt-BR' e sensitivity 'base' ignora acentos e maiúsculas
+        
                     oficiantes = rO.data.sort((a, b) => {
+        
                         const nomeA = (a.nome || "").trim();
                         const nomeB = (b.nome || "").trim();
+        
                         return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+        
                     });
+        
                     renderOficiantes();
                     updateOficianteSelects();
                     carregarFiltroOficiantes(oficiantes);
+        
                 }
-
-                // 2. Busca Escala
+        
+                // ESCALA
                 const rE = await apiCall({ action: "listEscala" });
-                if (rE.status === "ok") {
-                    escala = rE.data;
-                    renderEscalaTable();
-                    applyFilters();
-                }
+        
+                if (rE.status === "ok") {
+        
+                    escala = rE.data;
+        
+                    renderEscalaTable();    // tabela
+                    renderGestaoEscala();   // cards da gestão
+        
+                }
+        
             } catch (error) {
+        
                 console.error("Erro ao carregar dados:", error);
+        
             }
         }
-
         function renderOficiantes() {
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
                 <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
@@ -1701,6 +1712,7 @@
     </script>
 </body>
 </html>
+
 
 
 
