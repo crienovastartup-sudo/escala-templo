@@ -374,11 +374,12 @@
         window.onload = () => {
             lucide.createIcons();
             initCalendar();
+             // API por último
+            fetchData();
             setupListeners();
             switchTab('calendar');
         
-            // API por último
-            fetchData();
+           
         };
 
         function setupListeners() {
@@ -1712,6 +1713,7 @@
     </script>
 </body>
 </html>
+
 
 
 
