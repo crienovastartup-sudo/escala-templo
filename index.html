@@ -1213,6 +1213,19 @@
                 },
                 didParseCell: function (data) {
 
+                 // 🔴 Se for sábado, deixar data vermelha e negrito
+                if (data.section === 'body' && data.column.index === 0) {
+                
+                    const texto = data.cell.raw || "";
+                
+                    if (texto.toUpperCase().includes("SÁB")) {
+                        data.cell.styles.textColor = [200, 0, 0]; // vermelho
+                        data.cell.styles.fontStyle = "bold";
+                    }
+                
+                }   
+
+                    
                 const col = data.column.index;
             
                 // 🔥 DATA maior
@@ -1570,6 +1583,7 @@
     </script>
 </body>
 </html>
+
 
 
 
