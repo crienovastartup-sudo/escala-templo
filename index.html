@@ -1091,11 +1091,11 @@
                 grouped[d].push(e);
             });
         
-            doc.setFontSize(16);
-            doc.text("Escala Geral Setores", 14, 15);
+            doc.setFontSize(15);
+            doc.text("Escala Geral Setores", 14, 10);
         
-            doc.setFontSize(10);
-            doc.text(`Período: ${calendar.view.title}`, 14, 22);
+            doc.setFontSize(9);
+            doc.text(`Período: ${calendar.view.title}`, 14, 16);
         
             const rows = [];
         
@@ -1159,7 +1159,7 @@
             });
         
             doc.autoTable({
-                startY: 28,
+                startY: 20,
                 head: [[
                     "Data",
                     "Bat Turno 1", "Bat Turno 2", "Bat Turno 3",
@@ -1532,6 +1532,7 @@
     </script>
 </body>
 </html>
+
 
 
 
