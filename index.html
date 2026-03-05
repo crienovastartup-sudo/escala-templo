@@ -252,27 +252,6 @@
                 </form>
             </div>
         </div>
-
-        <div id="modal-replicar" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
-          <div class="bg-white rounded-xl p-6 w-80 space-y-4">
-        
-            <h3 class="font-bold text-lg">Replicar Escala</h3>
-        
-            <label class="text-sm font-bold">Escolher nova data</label>
-            <input type="date" id="replicar-data" class="w-full border rounded-lg p-2">
-        
-            <div class="flex justify-end gap-2 pt-3">
-              <button onclick="fecharModalReplicar()" class="px-3 py-1 bg-gray-300 rounded">
-                Cancelar
-              </button>
-        
-              <button onclick="confirmarReplicacao()" class="px-3 py-1 bg-purple-600 text-white rounded">
-                Replicar
-              </button>
-            </div>
-        
-          </div>
-        </div>
     
         <script>
             // Inicialização de ícones
@@ -563,11 +542,6 @@
                     const container = document.getElementById('calendar-popup-container');
                     const overlay = document.getElementById('calendar-popup-overlay');
                     const content = document.getElementById('calendar-popup-content');
-
-                    <button onclick='abrirReplicarEscala(${JSON.stringify(ext)})'
-                    class="bg-purple-600 text-white px-3 py-1 rounded-lg text-xs">
-                    🔁 Replicar
-                    </button>
         
                     // Injetar HTML limpo e de alta resolução no Modal com Data e Dia
                     content.innerHTML = `
@@ -1446,58 +1420,6 @@
         
             doc.save(`relatorio_${setorSelecionado.toLowerCase()}.pdf`);
         };
-
-            let itemParaReplicar = null;
-
-        window.abrirReplicarEscala = function(item){
-        
-            itemParaReplicar = item;
-        
-            const modal = document.getElementById("modal-replicar");
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-        
-            // sugestão automática: mesmo dia no próximo mês
-            const dataAtual = new Date(item.data);
-            dataAtual.setMonth(dataAtual.getMonth() + 1);
-        
-            document.getElementById("replicar-data").value =
-                dataAtual.toISOString().substring(0,10);
-        }
-
-         function fecharModalReplicar(){
-            const modal = document.getElementById("modal-replicar");
-            modal.classList.add("hidden");
-        }   
-
-         window.confirmarReplicacao = async function(){
-
-            const novaData = document.getElementById("replicar-data").value;
-        
-            if(!novaData){
-                alert("Escolha uma data.");
-                return;
-            }
-        
-            const payload = {
-                action: "addEscala",
-                data: novaData,
-                id_oficiante: itemParaReplicar.id_oficiante,
-                nome_oficiante: itemParaReplicar.nome_oficiante,
-                setor: itemParaReplicar.setor,
-                turno: itemParaReplicar.turno,
-                hora_inicial: itemParaReplicar.hora_inicial || "",
-                hora_final: itemParaReplicar.hora_final || ""
-            };
-        
-            const res = await apiCall(payload);
-        
-            if(res.status === "ok"){
-                fecharModalReplicar();
-                fetchData();
-                alert("Escala replicada com sucesso!");
-            }
-        }   
         
         // --- ACTIONS ---
 
@@ -1661,8 +1583,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
