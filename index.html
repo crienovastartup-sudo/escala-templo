@@ -781,38 +781,30 @@
 
        // FUNÇÃO FETCHDATA ATUALIZADA E CORRIGIDA PARA ORDENAR DE VERDADE
         async function fetchData() {
+
             try {
         
-                // OFICIANTES
                 const rO = await apiCall({ action: "listOficiantes" });
         
                 if (rO.status === "ok") {
         
-                    oficiantes = rO.data.sort((a, b) => {
-        
-                        const nomeA = (a.nome || "").trim();
-                        const nomeB = (b.nome || "").trim();
-        
-                        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
-        
-                    });
+                    oficiantes = rO.data.sort((a, b) =>
+                        (a.nome || "").localeCompare(b.nome || "", 'pt-BR', { sensitivity: 'base' })
+                    );
         
                     renderOficiantes();
                     updateOficianteSelects();
                     carregarFiltroOficiantes(oficiantes);
-        
                 }
         
-                // ESCALA
                 const rE = await apiCall({ action: "listEscala" });
         
                 if (rE.status === "ok") {
         
                     escala = rE.data;
         
-                    renderEscalaTable();    // tabela
-                    renderGestaoEscala();   // cards da gestão
-        
+                    renderEscalaTable();
+                    renderGestaoEscala();
                 }
         
             } catch (error) {
@@ -821,6 +813,7 @@
         
             }
         }
+        
         function renderOficiantes() {
             document.getElementById('oficiantes-list').innerHTML = oficiantes.map(o => `
                 <div class="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 hover:bg-slate-50 group">
@@ -1713,6 +1706,7 @@
     </script>
 </body>
 </html>
+
 
 
 
