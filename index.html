@@ -125,12 +125,32 @@
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="font-bold text-sm">Registros de Escala</h3>
                                 <!-- Novo filtro de mês para a Gestão -->
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold opacity-50 uppercase">Filtrar Mês:</span>
-                                    <input type="month" id="gestao-month-filter" 
-                                           onchange="renderGestaoEscala()" 
-                                           class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-slate-900">
-                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+
+                                <input type="month" id="gestao-month-filter"
+                                    onchange="renderGestaoEscala()"
+                                    class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                            
+                                <select id="gestao-oficiante-filter"
+                                    onchange="renderGestaoEscala()"
+                                    class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                            
+                                    <option value="">Todos Oficiantes</option>
+                                </select>
+                            
+                                <select id="gestao-turno-filter"
+                                    onchange="renderGestaoEscala()"
+                                    class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                            
+                                    <option value="">Todos Turnos</option>
+                                    <option value="PRIMEIRO">Primeiro</option>
+                                    <option value="SEGUNDO">Segundo</option>
+                                    <option value="SEGUNDO PARC">Segundo Parc</option>
+                                    <option value="TERCEIRO">Terceiro</option>
+                            
+                                </select>
+                            
+                            </div>
                             </div>
                             
                             <div id="gestao-escala-lista" class="space-y-2">
@@ -389,7 +409,40 @@
                 container.innerHTML = '<div class="p-4 text-center opacity-50 text-xs">Nenhum registro encontrado para este período.</div>';
                 return;
             }
-        
+            //gestao escala 
+            const filtroMes = document.getElementById("gestao-month-filter").value;
+            const filtroOficiante = document.getElementById("gestao-oficiante-filter").value;
+            const filtroTurno = document.getElementById("gestao-turno-filter").value;
+            
+            let dadosFiltrados = escalaData;
+            
+            //filtro no mes
+            if (filtroMes) {
+
+                dadosFiltrados = dadosFiltrados.filter(e => 
+                    e.data.startsWith(filtroMes)
+                );
+            
+            }
+            
+            //filtro oficiante
+            if (filtroOficiante) {
+
+                dadosFiltrados = dadosFiltrados.filter(e =>
+                    String(e.id_oficiante) === String(filtroOficiante)
+                );
+            
+            }
+            
+            //filtro turno
+            if (filtroTurno) {
+
+                dadosFiltrados = dadosFiltrados.filter(e =>
+                    e.turno === filtroTurno
+                );
+            
+            }
+            
             escalaFiltrada.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:shadow-sm transition-all';
@@ -422,6 +475,8 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        
+        
         /**
          * PASSO 1: A FUNÇÃO DE FORMATAÇÃO
          * Coloque esta função logo no início do seu <script> no arquivo principal.
@@ -738,6 +793,24 @@
             lucide.createIcons();
         }
 
+        //Preenche filtro oficiantes gestão escala
+        function carregarFiltroOficiantes(oficiantes){
+        
+            const select = document.getElementById("gestao-oficiante-filter");
+        
+            oficiantes.forEach(o => {
+        
+                const op = document.createElement("option");
+                op.value = o.id;
+                op.textContent = o.nome;
+        
+                select.appendChild(op);
+        
+            });
+        
+        } carregarFiltroOficiantes(oficiantes);
+
+        
         function renderEscalaTable() {
             const tbody = document.getElementById('escala-table-body');
             tbody.innerHTML = [...escala].sort((a,b) => a.data.localeCompare(b.data)).map(e => {
@@ -1583,6 +1656,7 @@
     </script>
 </body>
 </html>
+
 
 
 
