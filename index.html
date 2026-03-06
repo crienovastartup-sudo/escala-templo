@@ -1580,6 +1580,9 @@
             if(confirm("Remover este item da escala?")) {
                 const res = await apiCall({ action: "deleteEscala", id_oficiante: id, data, turno });
                 if(res.status === "ok") fetchData();
+                renderGestaoEscala();
+                renderEscalaTable();
+                refreshCalendar();
             }
         };
 
@@ -1657,6 +1660,7 @@
     </script>
 </body>
 </html>
+
 
 
 
