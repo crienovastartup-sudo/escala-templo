@@ -103,6 +103,12 @@
                     </button>
                 </div>
             </div>
+            
+            <button onclick="replicarMes()"
+            class="bg-green-600 text-white px-4 py-2 rounded-xl">
+            Replicar mês
+            </button>
+            
             <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div id="calendar"></div>
             </div>
@@ -300,7 +306,7 @@
             const turnoSelect = document.getElementById('escala-turno');
             const containerHorarios = document.getElementById('container-horarios-recepcao');
     
-            function popularDropdownHorarios(turno) {
+             popularDropdownHorarios(turno) {
                 const inicioSel = document.getElementById('escala-hora-inicial');
                 const fimSel = document.getElementById('escala-hora-final');
                 
@@ -323,7 +329,7 @@
                 fimSel.innerHTML = options;
             }
     
-            function handleRecepcaoDisplay() {
+             handleRecepcaoDisplay() {
                 if (setorSelect.value === 'RECEPÇÃO') {
                     containerHorarios.classList.remove('hidden');
                     popularDropdownHorarios(turnoSelect.value);
@@ -332,7 +338,7 @@
                 }
             }
     
-            function resetRecepcaoFields() {
+             resetRecepcaoFields() {
                 containerHorarios.classList.add('hidden');
                 document.getElementById('escala-hora-inicial').innerHTML = '';
                 document.getElementById('escala-hora-final').innerHTML = '';
@@ -363,13 +369,14 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbydJsVPa1rLUYG9jU9ncLjIbSBCrE5iqymf7wC28J0SomsTJavLBC6cUSjaixfzl7j1JQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyFP9qDg3OtJiyi3QqIKQ1CvQLv9rNpwiwPSYdA1aVixSgMCAFpz0rr21QpyNAjIYhKog/exec";
         const CLOUD_NAME = "dwlrxb6a0";
         const UPLOAD_PRESET = "ml_default";
         
         let oficiantes = [];
         let escala = [];
         let calendar;
+        let escalaSelecionada = null;
 
         window.onload = () => {
             lucide.createIcons();
@@ -379,7 +386,7 @@
             switchTab('calendar');
         };
 
-        function setupListeners() {
+         setupListeners() {
             ['filter-setor', 'filter-turno', 'filter-oficiante'].forEach(id => {
                 document.getElementById(id).addEventListener('change', applyFilters);
             });
@@ -391,7 +398,7 @@
          */
         
         // Função atualizada para renderizar a Gestão de Escala com filtro de mês
-        function renderGestaoEscala() {
+         renderGestaoEscala() {
             const container = document.getElementById('gestao-escala-lista');
             const monthFilter = document.getElementById('gestao-month-filter')?.value; // Ex: "2024-05"
              //gestao escala 
@@ -533,7 +540,7 @@
             }
         };
         
-        function initCalendar() {
+         initCalendar() {
             const calendarEl = document.getElementById('calendar');
             
             // Mapeamento de pesos para garantir a ordem correta
@@ -627,6 +634,22 @@
                                 
                             </div>
                         </div>
+                        <div class="mt-6 flex gap-2">
+
+                        <button 
+                        class="flex-1 bg-blue-600 text-white py-2 rounded-xl font-bold"
+                        onclick='editarEscalaDoPopup(${JSON.stringify(ext)})'>
+                        Editar
+                        </button>
+                        
+                        <button 
+                        class="flex-1 bg-green-600 text-white py-2 rounded-xl font-bold"
+                        onclick='replicarEscalaPopup(${JSON.stringify(ext)})'>
+                        Replicar
+                        </button>
+                        
+                        </div>
+                        
                         <div class="bg-white p-4 border-t flex justify-center">
                             <button onclick="closeCalendarPopup()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg">
                                 Fechar Visualização
@@ -730,6 +753,42 @@
                     container.classList.replace('flex', 'hidden');
                 }, 300);
             };
+
+            window.editarEscalaDoPopup = function(item){
+
+                closeCalendarPopup()
+            
+                editEscalaItem({
+                    id_oficiante: item.id_oficiante,
+                    data: item.data,
+                    turno: item.turno,
+                    setor: item.setor,
+                    hora_inicial: item.hora_inicial,
+                    hora_final: item.hora_final
+                })
+            
+            }
+
+            window.replicarEscalaPopup = async function(item){
+
+                const novaData = prompt("Digite a nova data (YYYY-MM-DD)")
+            
+                if(!novaData) return
+            
+                await apiCall({
+                    action:"addEscala",
+                    data:novaData,
+                    id_oficiante:item.id_oficiante,
+                    setor:item.setor,
+                    turno:item.turno,
+                    hora_inicial:item.hora_inicial,
+                    hora_final:item.hora_final
+                })
+            
+                fetchData()
+                calendar.refetchEvents()
+            
+            }
         
             document.getElementById('calendar-popup-overlay').addEventListener('click', window.closeCalendarPopup);
             document.addEventListener('keydown', (e) => { if(e.key === "Escape") window.closeCalendarPopup(); });
@@ -1653,13 +1712,63 @@
         
         });
 
-        document.querySelectorAll("#gestao-month-filter,#gestao-oficiante-filter,#gestao-turno-filter")
+
+        async function replicarMes(){
+
+            const mesDestino = prompt("Digite o mês destino (YYYY-MM)")
+            
+            if(!mesDestino) return
+            
+            for(let e of escala){
+            
+            const dataOriginal = new Date(e.data)
+            
+            const dia = dataOriginal.getDate()
+            
+            const novaData = mesDestino + "-" + String(dia).padStart(2,"0")
+            
+            await apiCall({
+            action:"addEscala",
+            data:novaData,
+            id_oficiante:e.id_oficiante,
+            setor:e.setor,
+            turno:e.turno,
+            hora_inicial:e.hora_inicial,
+            hora_final:e.hora_final
+            })
+            
+            }
+            
+            fetchData()
+            calendar.refetchEvents()
+        
+        }
+
+        async function excluirMes(){
+
+            const mes = prompt("Digite o mês para excluir (YYYY-MM)")
+            
+            if(!mes) return
+            
+            await apiCall({
+            action:"deleteMes",
+            mes:mes
+            })
+            
+            fetchData()
+            calendar.refetchEvents()
+            
+        }
+
+         document.querySelectorAll("#gestao-month-filter,#gestao-oficiante-filter,#gestao-turno-filter")
     	.forEach(el => el.addEventListener("change", renderGestaoEscala));
         
         function showLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
+        
     </script>
 </body>
 </html>
+
 
 
 
