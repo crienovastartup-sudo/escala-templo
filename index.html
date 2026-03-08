@@ -386,11 +386,11 @@
             switchTab('calendar');
         };
 
-         setupListeners() {
-            ['filter-setor', 'filter-turno', 'filter-oficiante'].forEach(id => {
-                document.getElementById(id).addEventListener('change', applyFilters);
-            });
-        }
+        function setupListeners() {
+                ['filter-setor', 'filter-turno', 'filter-oficiante'].forEach(id => {
+                    document.getElementById(id).addEventListener('change', applyFilters);
+                });
+            }
 
         /**
          * Adicione este input na sua área de Gestão de Escala (HTML):
@@ -1776,6 +1776,7 @@
     </script>
 </body>
 </html>
+
 
 
 
