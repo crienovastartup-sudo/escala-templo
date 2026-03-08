@@ -1711,16 +1711,8 @@
             }
         };
 
-        document.addEventListener("DOMContentLoaded", function(){
 
-            document.getElementById("oficiante-nome").addEventListener("input", function(){
-                this.value = this.value.toUpperCase();
-            });
-        
-        });
-
-
-        async function replicarMes(){
+                async function replicarMes(){
 
             const mesDestino = prompt("Digite o mês destino (YYYY-MM)")
             
@@ -1766,6 +1758,15 @@
             calendar.refetchEvents()
             
         }
+        
+        document.addEventListener("DOMContentLoaded", function(){
+
+            document.getElementById("oficiante-nome").addEventListener("input", function(){
+                this.value = this.value.toUpperCase();
+            });
+        
+        });
+
 
          document.querySelectorAll("#gestao-month-filter,#gestao-oficiante-filter,#gestao-turno-filter")
     	.forEach(el => el.addEventListener("change", renderGestaoEscala));
@@ -1775,6 +1776,7 @@
     </script>
 </body>
 </html>
+
 
 
 
