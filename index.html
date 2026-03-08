@@ -771,22 +771,26 @@
 
             window.replicarEscalaPopup = async function(item){
 
-                const novaData = prompt("Digite a nova data (YYYY-MM-DD)")
+                const novaData = prompt("Digite a nova data (YYYY-MM-DD)");
             
-                if(!novaData) return
+                if(!novaData) return;
             
-                await apiCall({
-                    action:"addEscala",
-                    data:novaData,
-                    id_oficiante:item.id_oficiante,
-                    setor:item.setor,
-                    turno:item.turno,
-                    hora_inicial:item.hora_inicial,
-                    hora_final:item.hora_final
-                })
+                const resp = await apiCall({
+                    action: "addEscala",
+                    data: novaData,
+                    id_oficiante: item.id_oficiante,
+                    setor: item.setor,
+                    turno: item.turno,
+                    hora_inicial: item.hora_inicial,
+                    hora_final: item.hora_final
+                });
             
-                fetchData()
-                calendar.refetchEvents()
+                if(resp.status === "ok"){
+                    await fetchData();
+                    applyFilters(); // atualiza calendário
+                } else {
+                    alert("Erro ao replicar escala");
+                }
             
             }
         
@@ -1776,6 +1780,7 @@
     </script>
 </body>
 </html>
+
 
 
 
