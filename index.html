@@ -69,23 +69,40 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
         <section id="sec-calendar" class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border">
-                <div class="flex flex-wrap gap-3">
-                    <select id="filter-setor" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
-                        <option value="">Todos Setores</option>
-                        <option value="BATISTÉRIO">Batistério</option>
-                        <option value="RECEPÇÃO">Recepção</option>
-                        <option value="SELAMENTO">Selamento</option>
-                    </select>
-                    <select id="filter-turno" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
-                        <option value="">Todos Turnos</option>
-                        <option value="PRIMEIRO">Primeiro</option>
-                        <option value="SEGUNDO">Segundo</option>
-                        <option value="SEGUNDO PARC">Segundo Parcial</option>
-                        <option value="TERCEIRO">Terceiro</option>
-                    </select>
-                    <select id="filter-oficiante" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
-                        <option value="">Todos Oficiantes</option>
-                    </select>
+               <div class="flex flex-col gap-4 bg-white p-4 rounded-xl shadow-sm border">
+
+                    <!-- 🔥 LINHA 1: DATAS -->
+                    <div class="flex flex-wrap items-center gap-3 justify-between">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="text-sm font-semibold">FILTRAR PARA RELATÓRIOS:</span>
+                            <input type="date" id="dataInicio" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm">
+                            <span>até</span>
+                            <input type="date" id="dataFim" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                
+                    <!-- 🔥 LINHA 2: FILTROS -->
+                    <div class="flex flex-wrap gap-3">
+                        <select id="filter-setor" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
+                            <option value="">Todos Setores</option>
+                            <option value="BATISTÉRIO">Batistério</option>
+                            <option value="RECEPÇÃO">Recepção</option>
+                            <option value="SELAMENTO">Selamento</option>
+                        </select>
+                
+                        <select id="filter-turno" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
+                            <option value="">Todos Turnos</option>
+                            <option value="PRIMEIRO">Primeiro</option>
+                            <option value="SEGUNDO">Segundo</option>
+                            <option value="SEGUNDO PARC">Segundo Parcial</option>
+                            <option value="TERCEIRO">Terceiro</option>
+                        </select>
+                
+                        <select id="filter-oficiante" class="bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-blue-500 outline-none">
+                            <option value="">Todos Oficiantes</option>
+                        </select>
+                    </div>
+                
                 </div>
                 <div class="flex flex-wrap gap-2">
                     
@@ -299,30 +316,43 @@
             const setorSelect = document.getElementById('escala-setor');
             const turnoSelect = document.getElementById('escala-turno');
             const containerHorarios = document.getElementById('container-horarios-recepcao');
+
+
     
-            function popularDropdownHorarios(turno) {
-                const inicioSel = document.getElementById('escala-hora-inicial');
-                const fimSel = document.getElementById('escala-hora-final');
-                
+            function popularDropdownHorarios(turno, idIni, idFim) {
+                const inicioSel = document.getElementById(idIni);
+                const fimSel = document.getElementById(idFim);
+            
+                if (!inicioSel || !fimSel) {
+                    console.error("ERRO: Select não encontrado", idIni, idFim);
+                    return;
+                }
+            
                 let startHour, endHour;
-    
+            
                 if (turno === 'PRIMEIRO') { startHour = 7; endHour = 13; }
                 else if (turno === 'SEGUNDO') { startHour = 12; endHour = 18; }
-                else if (turno === 'SEGUNDO PARC') { startHour = 12; endHour = 18; }    
+                else if (turno === 'SEGUNDO PARC') { startHour = 12; endHour = 18; }
                 else if (turno === 'TERCEIRO') { startHour = 17; endHour = 21; }
                 else { startHour = 7; endHour = 21; }
-    
+            
                 let options = '<option value="">Selecione</option>';
+            
                 for (let h = startHour; h <= endHour; h++) {
                     for (let m = 0; h === endHour ? m === 0 : m < 60; m += 30) {
-                        const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                        const hh = String(h).padStart(2, '0');
+                        const mm = String(m).padStart(2, '0');
+                        const time = `${hh}:${mm}`;
                         options += `<option value="${time}">${time}</option>`;
                     }
                 }
+            
                 inicioSel.innerHTML = options;
                 fimSel.innerHTML = options;
+            
+                console.log("POPULOU:", idIni, [...inicioSel.options].map(o => o.value));
             }
-    
+            
             function handleRecepcaoDisplay() {
                 if (setorSelect.value === 'RECEPÇÃO') {
                     containerHorarios.classList.remove('hidden');
@@ -363,7 +393,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbydJsVPa1rLUYG9jU9ncLjIbSBCrE5iqymf7wC28J0SomsTJavLBC6cUSjaixfzl7j1JQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyHd30Nl9W0gIrpjhbTeXtVmcYcmn7CYZD6_4LuH3lmfvBRKqM-pihLlJVYpikxcc4/exec";
         const CLOUD_NAME = "dwlrxb6a0";
         const UPLOAD_PRESET = "ml_default";
         
@@ -482,30 +512,43 @@
          */
         const formatarHora = (valor) => {
             if (!valor) return "";
+        
             let str = String(valor).trim();
-            
-            // Se o valor começar com o apóstrofo (forçado na planilha), removemos para exibição
+        
+            // Remove apóstrofo
             if (str.startsWith("'")) {
                 str = str.substring(1);
             }
         
-            // Corrige o formato ISO vindo do Sheets (1899-12-30T10:00:00)
-            if (str.includes('T')) {
-                str = str.split('T')[1];
+            // Se vier ISO (ex: 1899-12-30T07:00:00)
+            if (str.includes("T")) {
+                str = str.split("T")[1];
             }
-            
-            // Busca o padrão HH:mm (ex: 07:00)
+        
+            // Se for Date válido
+            const d = new Date(valor);
+            if (!isNaN(d) && str.length > 10) {
+                return d.toTimeString().substring(0, 5);
+            }
+        
+            // Regex segura
             const match = str.match(/(\d{1,2}):(\d{2})/);
+        
             if (match) {
-                return `${match[1].padStart(2, '0')}:${match[2]}`;
+                const hora = match[1].padStart(2, '0');
+                const min = match[2];
+                return `${hora}:${min}`;
             }
-            return str.substring(0, 5);
+        
+            return "";
         };
-
         
         // 2. Função de Edição Atualizada
         window.editEscalaItem = (item) => { 
             openEscalaModal();
+        
+            const modal = document.getElementById('modal-escala');
+        
             document.getElementById('escala-modal-title').innerText = 'Editar Escala';
             
             document.getElementById('escala-id-original').value = item.id_oficiante;
@@ -517,19 +560,340 @@
             document.getElementById('escala-setor').value = item.setor;
             document.getElementById('escala-turno').value = item.turno;
         
-            const containerRecepcao = document.getElementById('container-horarios-recepcao');
-            const selectHoraInicial = document.getElementById('escala-hora-inicial');
-            const selectHoraFinal = document.getElementById('escala-hora-final');
+            const containerRecepcao = modal.querySelector('#container-horarios-recepcao');
+            const selectHoraInicial = modal.querySelector('#escala-hora-inicial');
+            const selectHoraFinal = modal.querySelector('#escala-hora-final');
         
             if (item.setor && item.setor.toUpperCase().includes('RECEPÇÃO')) {
                 containerRecepcao.classList.remove('hidden');
-                // Usando a nova formatação para garantir que o select encontre o valor "07:00"
-                selectHoraInicial.value = formatarHora(item.hora_inicial);
-                selectHoraFinal.value = formatarHora(item.hora_final);
+        
+                const turno = (item.turno || "").trim().toUpperCase();
+        
+                popularDropdownHorarios(turno, 'escala-hora-inicial', 'escala-hora-final');
+        
+                const horaIni = formatarHora(item.hora_inicial);
+                const horaFim = formatarHora(item.hora_final);
+        
+                setTimeout(() => {
+                    selectHoraInicial.value = horaIni;
+                    selectHoraFinal.value = horaFim;
+        
+                    console.log("APLICADO:", horaIni, horaFim);
+                    console.log("OPTIONS:", [...selectHoraInicial.options].map(o => o.value));
+                }, 100);
+        
             } else {
                 containerRecepcao.classList.add('hidden');
                 selectHoraInicial.value = "";
                 selectHoraFinal.value = "";
+            }
+        };
+        
+        
+        window.editarEvento = function(eventId) {
+            const evento = calendar.getEventById(eventId);
+            if (!evento) return alert("Evento não encontrado");
+        
+            const ext = evento.extendedProps;
+        
+            const container = document.getElementById('calendar-popup-container');
+            const content = document.getElementById('calendar-popup-content');
+        
+            // 🔥 monta opções de oficiante automaticamente
+            const opcoesOficiantes = oficiantes.map(o => `
+                <option value="${o.id}" ${String(o.id) === String(ext.id_oficiante) ? "selected" : ""}>
+                    ${o.nome}
+                </option>
+            `).join("");
+        
+            content.innerHTML = `
+                <div class="p-6">
+                    <h2 class="text-lg font-bold mb-4 text-center">Editar Escala</h2>
+        
+                    <label class="text-sm font-semibold">Oficiante</label>
+                    <select id="editOficiante" class="w-full mb-3 p-2 border rounded-lg">
+                        ${opcoesOficiantes}
+                    </select>
+        
+                    <label class="text-sm font-semibold">Data</label>
+                    <input type="date" id="editData" value="${evento.startStr.substring(0,10)}"
+                        class="w-full mb-3 p-2 border rounded-lg">
+        
+                    <label class="text-sm font-semibold">Setor</label>
+                    <select id="editSetor" class="w-full mb-3 p-2 border rounded-lg">
+                        <option ${ext.setor==="BATISTÉRIO"?"selected":""}>BATISTÉRIO</option>
+                        <option ${ext.setor==="RECEPÇÃO"?"selected":""}>RECEPÇÃO</option>
+                        <option ${ext.setor==="SELAMENTO"?"selected":""}>SELAMENTO</option>
+                    </select>
+        
+                    <label class="text-sm font-semibold">Turno</label>
+                    <select id="editTurno" class="w-full mb-3 p-2 border rounded-lg">
+                        <option ${ext.turno==="PRIMEIRO"?"selected":""}>PRIMEIRO</option>
+                        <option ${ext.turno==="SEGUNDO"?"selected":""}>SEGUNDO</option>
+                        <option ${ext.turno==="TERCEIRO"?"selected":""}>TERCEIRO</option>
+                    </select>
+        
+                    <!-- 🔥 CONTAINER RECEPÇÃO -->
+                    <div id="containerEditRecepcao" class="hidden">
+                        <label class="text-sm font-semibold">Hora Inicial</label>
+                        <select id="editHoraIni" class="w-full mb-3 p-2 border rounded-lg"></select>
+        
+                        <label class="text-sm font-semibold">Hora Final</label>
+                        <select id="editHoraFim" class="w-full mb-4 p-2 border rounded-lg"></select>
+                    </div>
+        
+                    <div class="flex gap-2">
+                        <button onclick="salvarEdicao('${eventId}')"
+                            class="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold">
+                            Salvar
+                        </button>
+        
+                        <button onclick="excluirEvento('${eventId}')"
+                            class="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold">
+                            Excluir
+                        </button>
+        
+                        <button onclick="closeCalendarPopup()"
+                            class="flex-1 bg-gray-300 py-2 rounded-lg font-bold">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            `;
+        
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+        
+            // 🔥 ELEMENTOS
+            const selectSetor = document.getElementById("editSetor");
+            const selectTurno = document.getElementById("editTurno");
+            const containerRecepcao = document.getElementById("containerEditRecepcao");
+            const horaIni = document.getElementById("editHoraIni");
+            const horaFim = document.getElementById("editHoraFim");
+        
+            // 🔥 REAPROVEITA SUA FUNÇÃO EXISTENTE
+            function atualizarRecepcao() {
+                if (selectSetor.value === "RECEPÇÃO") {
+                    containerRecepcao.classList.remove("hidden");
+            
+                    // 🔥 AGORA CORRETO
+                    popularDropdownHorarios(selectTurno.value, "editHoraIni", "editHoraFim");
+
+                    setTimeout(() => {
+                        horaIni.value = formatarHora(ext.hora_inicial);
+                        horaFim.value = formatarHora(ext.hora_final);
+                    }, 50);
+            
+                    setTimeout(() => {
+                        horaIni.value = formatarHora(ext.hora_inicial);
+                        horaFim.value = formatarHora(ext.hora_final);
+                    }, 50);
+            
+                } else {
+                    containerRecepcao.classList.add("hidden");
+                    horaIni.value = "";
+                    horaFim.value = "";
+                }
+            }
+        
+            // 🔥 executa ao abrir
+            atualizarRecepcao();
+        
+            // 🔥 ao trocar setor
+            selectSetor.addEventListener("change", atualizarRecepcao);
+        
+            // 🔥 ao trocar turno
+            selectTurno.addEventListener("change", () => {
+                if (selectSetor.value === "RECEPÇÃO") {
+                    popularDropdownHorarios(selectTurno.value);
+                }
+            });
+        };
+
+        window.salvarEdicao = async function(eventId) {
+            const evento = calendar.getEventById(eventId);
+            if (!evento) return alert("Evento não encontrado");
+        
+            const ext = evento.extendedProps;
+        
+            const selectOficiante = document.getElementById("editOficiante");
+            const data = document.getElementById("editData").value;
+            const setor = document.getElementById("editSetor").value;
+            const turno = document.getElementById("editTurno").value;
+        
+            const horaIniInput = document.getElementById("editHoraIni");
+            const horaFimInput = document.getElementById("editHoraFim");
+        
+            const id_oficiante = selectOficiante.value;
+            const nome = selectOficiante.selectedOptions[0].text;
+        
+            let horaIni = horaIniInput?.value || "";
+            let horaFim = horaFimInput?.value || "";
+        
+            if (setor !== "RECEPÇÃO") {
+                horaIni = "";
+                horaFim = "";
+            }
+        
+            // 🔴 VALIDAÇÃO
+            const conflito = calendar.getEvents().some(ev => {
+                if (ev.id === eventId) return false;
+        
+                return (
+                    ev.extendedProps.id_oficiante == id_oficiante &&
+                    ev.startStr.substring(0,10) === data &&
+                    ev.extendedProps.turno === turno
+                );
+            });
+        
+            if (conflito) {
+                alert("⚠️ Conflito de escala!");
+                return;
+            }
+        
+            // 🔥 CORREÇÃO AQUI
+            const payload = {
+                action: "updateEscala",
+        
+                data,
+                id_oficiante,
+                nome_oficiante: nome,
+                setor,
+                turno,
+        
+                // ✅ AGORA CORRETO
+                id_original: ext.id_oficiante,
+                data_original: evento.startStr.substring(0,10),
+                turno_original: ext.turno,
+        
+                hora_inicial: horaIni,
+                hora_final: horaFim
+            };
+        
+            console.log("ENVIANDO:", payload); // 🔍 DEBUG
+        
+            const res = await apiCall(payload);
+        
+            if (res.status !== "ok") {
+                alert(res.message || "Erro ao salvar no banco");
+                return;
+            }
+        
+            // 🔥 ATUALIZA TELA
+            evento.setProp("title", nome);
+            evento.setStart(data);
+            evento.setExtendedProp("id_oficiante", id_oficiante);
+            evento.setExtendedProp("setor", setor);
+            evento.setExtendedProp("turno", turno);
+            evento.setExtendedProp("hora_inicial", horaIni);
+            evento.setExtendedProp("hora_final", horaFim);
+        
+            closeCalendarPopup();
+            alert("Escala atualizada!");
+        };
+
+        window.excluirEvento = async function(eventId) {
+            if (!confirm("Deseja realmente excluir este evento?")) return;
+        
+            const evento = calendar.getEventById(eventId);
+            if (!evento) return;
+        
+            const ext = evento.extendedProps;
+        
+            const payload = {
+                action: "deleteEscala",
+        
+                // 🔥 CHAVE CORRETA
+                data: evento.startStr.substring(0,10),
+                turno: ext.turno,
+                id_oficiante: ext.id_oficiante
+            };
+        
+            console.log("EXCLUINDO:", payload);
+        
+            const res = await apiCall(payload);
+        
+            if (res.status !== "ok") {
+                alert(res.message || "Erro ao excluir");
+                return;
+            }
+        
+            // 🔥 REMOVE DA TELA (SÓ DEPOIS DE CONFIRMAR)
+            evento.remove();
+        
+            closeCalendarPopup();
+            alert("Evento excluído!");
+        };
+        
+        window.abrirReplicar = function(eventId) {
+            const container = document.getElementById('calendar-popup-container');
+            const content = document.getElementById('calendar-popup-content');
+        
+            content.innerHTML = `
+                <div class="p-6">
+                    <h2 class="text-lg font-bold mb-4 text-center">Replicar Escala</h2>
+        
+                    <label class="text-sm font-semibold">Escolha a nova data:</label>
+                    <input type="date" id="novaDataReplicar" 
+                           class="w-full mt-2 mb-4 p-2 border rounded-lg">
+        
+                    <div class="flex gap-2">
+                        <button onclick="confirmarReplicar('${eventId}')"
+                            class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold">
+                            Replicar
+                        </button>
+        
+                        <button onclick="closeCalendarPopup()"
+                            class="flex-1 bg-gray-300 py-2 rounded-lg font-bold">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            `;
+        
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+        };
+
+        window.confirmarReplicar = function(eventId) {
+            const novaData = document.getElementById("novaDataReplicar").value;
+        
+            if (!novaData) {
+                alert("Escolha uma data!");
+                return;
+            }
+        
+            replicarEvento(eventId, novaData);
+            closeCalendarPopup();
+        };
+
+        window.replicarEvento = async function(eventId, novaData) {
+            const evento = calendar.getEventById(eventId);
+            if (!evento) return alert("Evento não encontrado");
+        
+            const ext = evento.extendedProps;
+        
+            const payload = {
+                action: "addEscala",
+        
+                data: novaData,
+                id_oficiante: ext.id_oficiante,
+                nome_oficiante: evento.title,
+        
+                setor: ext.setor,
+                turno: ext.turno,
+        
+                hora_inicial: ext.hora_inicial || "",
+                hora_final: ext.hora_final || ""
+            };
+        
+            const res = await apiCall(payload);
+        
+            if (res.status === "ok") {
+                fetchData(); // 🔥 recarrega do banco
+                alert("Escala replicada!");
+            } else {
+                alert("Erro ao replicar");
             }
         };
         
@@ -627,10 +991,23 @@
                                 
                             </div>
                         </div>
-                        <div class="bg-white p-4 border-t flex justify-center">
-                            <button onclick="closeCalendarPopup()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg">
-                                Fechar Visualização
+                        <div class="bg-white p-4 border-t flex flex-col gap-2">
+
+                            <button onclick="editarEvento('${info.event.id}')" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700">
+                                ✏️ Editar Escala
                             </button>
+                        
+                            <button onclick="abrirReplicar('${info.event.id}')" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700">
+                                📅 Replicar para outra data
+                            </button>
+                        
+                            <button onclick="closeCalendarPopup()" 
+                                class="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800">
+                                Fechar
+                            </button>
+                        
                         </div>
                     `;
         
@@ -654,6 +1031,7 @@
                  * Localize "eventContent: function(arg) {" dentro do "initCalendar"
                  * e substitua por este bloco abaixo:
                  */
+
                 
                 // 2. O bloco eventContent atualizado com a sua lógica de busca da API
                 eventContent: function(arg) {
@@ -857,11 +1235,14 @@
                 (!fO || String(item.id_oficiante) === String(fO))
             ).forEach(e => {
                 calendar.addEvent({ 
+                    id: e.id_oficiante + "_" + e.data.substring(0,10) + "_" + e.turno,
+                
                     title: e.nome_oficiante, 
                     start: e.data.substring(0, 10), 
                     allDay: true, 
-                    // INJEÇÃO DA ORDEM: Sem isso no primeiro nível, o calendar não ordena.
+                
                     ordemTurno: pesosTurno[String(e.turno).toUpperCase()] || 99,
+                
                     extendedProps: { ...e } 
                 });
             });
@@ -887,12 +1268,13 @@
             });
         }
 
+        
         // --- RELATÓRIOS PDF ---
         // --- RELATÓRIOS PDF ATUALIZADOS ---
 
         // Objeto de apoio para ordenação de turnos
         const turnosOrder = { "PRIMEIRO": 1, "SEGUNDO": 2, "SEGUNDO PARC": 3, "TERCEIRO": 4 };
-
+        
          // hora simples
             function formatarHoraSimples(valor) {
             
@@ -1162,10 +1544,49 @@
                     10,
                     { align: 'right' }
                 );
+      
+           // 🔹 Pega datas dos inputs (se existir) 
+            const dataInicioStr = document.getElementById("dataInicio")?.value;
+            const dataFimStr = document.getElementById("dataFim")?.value;
+           function formatarDataLocal(data) {
+                const ano = data.getFullYear();
+                const mes = String(data.getMonth() + 1).padStart(2, '0');
+                const dia = String(data.getDate()).padStart(2, '0');
+                return `${ano}-${mes}-${dia}`;
+            }
             
+            // 🔹 Define período
+            let dataInicio, dataFim;
             
-        
-            const rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
+            if (dataInicioStr && dataFimStr) {
+                dataInicio = new Date(dataInicioStr + "T00:00:00");
+                dataFim = new Date(dataFimStr + "T23:59:59");
+            } else {
+                // 🔥 usa mês atual do calendário
+                dataInicio = calendar.view.activeStart;
+                dataFim = new Date(calendar.view.activeEnd);
+                dataFim.setDate(dataFim.getDate() - 1);
+            }
+            
+            // 🔹 Busca dados
+            let rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
+            
+            // 🔥 FILTRA AQUI (ESSA É A PARTE MAIS IMPORTANTE)
+           rawData = rawData.filter(e => {
+                if (!e.data) return false;
+            
+                const dataStr = e.data.substring(0,10); // já está correto
+            
+                const inicioStr = dataInicioStr 
+                    ? dataInicioStr 
+                    : formatarDataLocal(dataInicio);
+            
+                const fimStr = dataFimStr 
+                    ? dataFimStr 
+                    : formatarDataLocal(dataFim);
+            
+                return dataStr >= inicioStr && dataStr <= fimStr;
+            });
         
             if (!rawData.length) {
                 alert("Nenhum dado encontrado.");
@@ -1179,15 +1600,24 @@
             const grouped = {};
             rawData.forEach(e => {
                 const d = e.data.substring(0,10);
+            
                 if (!grouped[d]) grouped[d] = [];
                 grouped[d].push(e);
             });
         
-            doc.setFontSize(15);
+            doc.setFontSize(14);
             doc.text("Escala Geral Setores", 14, 10);
         
             doc.setFontSize(9);
-            doc.text(`Período: ${calendar.view.title}`, 14, 16);
+            function formatarDataBR(data) {
+                return data.toLocaleDateString('pt-BR');
+            }
+            
+            doc.text(
+                `Período: ${formatarDataBR(dataInicio)} até ${formatarDataBR(dataFim)}`,
+                14,
+                16
+            );
 
             
             
@@ -1255,7 +1685,7 @@
             });
         
             doc.autoTable({
-                startY: 20,
+                startY: 19,
                 head: [[
                     "Data",
                     "Bat Turno 1", "Bat Turno 2", "Bat Turno 3",
@@ -1334,18 +1764,63 @@
 
 
         window.relatorioIndividualPorSetor = function() {
-
+        
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape');
         
-            const rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
+            let rawData = typeof getFilteredData === 'function' ? getFilteredData() : [];
         
             if (!rawData.length) {
                 alert("Nenhum dado encontrado.");
                 return;
             }
         
-            // Descobrir qual setor está filtrado
+            // 🔥 CAPTURA DATAS DOS INPUTS
+            const dataInicioStr = document.getElementById("dataInicio")?.value;
+            const dataFimStr = document.getElementById("dataFim")?.value;
+        
+            function formatarDataLocal(data) {
+                const ano = data.getFullYear();
+                const mes = String(data.getMonth() + 1).padStart(2, '0');
+                const dia = String(data.getDate()).padStart(2, '0');
+                return `${ano}-${mes}-${dia}`;
+            }
+        
+            // 🔥 DEFINE PERÍODO
+            let dataInicio, dataFim;
+        
+            if (dataInicioStr && dataFimStr) {
+                dataInicio = new Date(dataInicioStr + "T00:00:00");
+                dataFim = new Date(dataFimStr + "T23:59:59");
+            } else {
+                dataInicio = calendar.view.activeStart;
+                dataFim = new Date(calendar.view.activeEnd);
+                dataFim.setDate(dataFim.getDate() - 1);
+            }
+        
+            // 🔥 FILTRO DE DATAS
+            rawData = rawData.filter(e => {
+                if (!e.data) return false;
+        
+                const dataStr = e.data.substring(0,10);
+        
+                const inicioStr = dataInicioStr 
+                    ? dataInicioStr 
+                    : formatarDataLocal(dataInicio);
+        
+                const fimStr = dataFimStr 
+                    ? dataFimStr 
+                    : formatarDataLocal(dataFim);
+        
+                return dataStr >= inicioStr && dataStr <= fimStr;
+            });
+        
+            if (!rawData.length) {
+                alert("Nenhum dado encontrado para o período.");
+                return;
+            }
+        
+            // 🔥 DESCOBRE SETOR
             const setorSelecionado = rawData[0]?.setor;
         
             if (!setorSelecionado) {
@@ -1353,10 +1828,10 @@
                 return;
             }
         
-            // Ordena por data
+            // 🔥 ORDENA
             rawData.sort((a,b)=> (a.data || "").localeCompare(b.data || ""));
         
-            // Agrupar por data
+            // 🔥 AGRUPA
             const grouped = {};
             rawData.forEach(e => {
                 const d = e.data.substring(0,10);
@@ -1364,11 +1839,29 @@
                 grouped[d].push(e);
             });
         
-            doc.setFontSize(16);
+            // 🔥 CABEÇALHO
+            doc.setFontSize(12);
             doc.text(`Relatório Individual - ${setorSelecionado}`, 14, 15);
         
+            const agora = new Date();
+            const dataHora = agora.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        
+            function formatarDataBR(data) {
+                return data.toLocaleDateString('pt-BR');
+            }
+        
             doc.setFontSize(10);
-            doc.text(`Período: ${calendar.view.title}`, 14, 22);
+            doc.text(
+                `Período: ${formatarDataBR(dataInicio)} até ${formatarDataBR(dataFim)} | Gerado em: ${dataHora}`,
+                14,
+                19
+            );
         
             const rows = [];
         
@@ -1385,22 +1878,24 @@
         
                 grouped[dateKey].forEach(e => {
         
+                    const turno = (e.turno || "").toUpperCase().trim();
+        
                     const turnoNum =
-                        e.turno === "PRIMEIRO" ? "1" :
-                        e.turno === "SEGUNDO" ? "2" : "3";
+                        turno === "PRIMEIRO" ? "1" :
+                        (turno === "SEGUNDO" || turno === "SEGUNDO PARC") ? "2" :
+                        turno === "TERCEIRO" ? "3" : "";
         
                     let nomeFormatado = e.nome_oficiante;
-
+        
                     if (setorSelecionado === "RECEPÇÃO") {
-                    
                         const horaIni = formatarHoraSimples(e.hora_inicial || e.hora_inicio);
                         const horaFim = formatarHoraSimples(e.hora_final || e.hora_fim);
-                    
+        
                         if (horaIni && horaFim) {
                             nomeFormatado = `${e.nome_oficiante} (${horaIni} às ${horaFim})`;
                         }
                     }
-                    
+        
                     if (linha["T"+turnoNum]) {
                         linha["T"+turnoNum].push(nomeFormatado);
                     }
@@ -1409,90 +1904,83 @@
                 rows.push(linha);
             });
         
-            // DEFINIR COLUNAS DINÂMICAS
+            // 🔥 TABELA
             let head = [];
             let body = [];
         
-            if (setorSelecionado === "BATISTÉRIO") {
-        
-                head = [["Data", "Turno 1", "Turno 2", "Turno 3"]];
-        
-                body = rows.map(l => [
-                    l.data,
-                    l.T1.join("\n"),
-                    l.T2.join("\n"),
-                    l.T3.join("\n")
-                ]);
-        
-            } else if (setorSelecionado === "RECEPÇÃO") {
-        
+            if (setorSelecionado === "RECEPÇÃO") {
                 head = [["Data", "Turno 1", "Turno 2"]];
-        
-                body = rows.map(l => [
-                    l.data,
-                    l.T1.join("\n"),
-                    l.T2.join("\n")
-                ]);
-        
-            } else if (setorSelecionado === "SELAMENTO") {
-        
+                body = rows.map(l => [l.data, l.T1.join("\n"), l.T2.join("\n")]);
+            } else {
                 head = [["Data", "Turno 1", "Turno 2", "Turno 3"]];
-        
-                body = rows.map(l => [
-                    l.data,
-                    l.T1.join("\n"),
-                    l.T2.join("\n"),
-                    l.T3.join("\n")
-                ]);
+                body = rows.map(l => [l.data, l.T1.join("\n"), l.T2.join("\n"), l.T3.join("\n")]);
             }
         
             doc.autoTable({
-            startY: 28,
-            head: head,
-            body: body,
-            styles: {
-                fontSize: 8,
-                cellPadding: 1.5,
-                valign: 'middle'
-            },
-            headStyles: {
-                fillColor: [40,40,40],
-                textColor: 255
-            },
-            columnStyles: {
-                0: { cellWidth: 35 }
-            },
-            didParseCell: function (data) {
+                startY: 20,
+                head: head,
+                body: body,
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 0.8,
+                    lineColor: [0,0,0],
+                    lineHeight: 1,
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [40,40,40],
+                    textColor: 255
+                },
         
-                // Ignora cabeçalho
-                if (data.section !== 'body') return;
+                // 🔥 AQUI ESTÁ O UPGRADE VISUAL
+                didParseCell: function (data) {
         
-                const col = data.column.index;
+                    if (data.section !== 'body') return;
         
-                // Não pintar coluna Data
-                if (col === 0) return;
+                    const col = data.column.index;
+                    const texto = data.cell.raw || "";
+                    const textoUpper = texto.toUpperCase();
         
-                // 🔵 BATISTÉRIO
-                if (setorSelecionado === "BATISTÉRIO") {
-                    data.cell.styles.fillColor = [220, 235, 255];
-                }
+                    // 🔥 DATA
+                    if (col === 0) {
+                        data.cell.styles.fontSize = 10;
+                        data.cell.styles.fontStyle = 'bold';
         
-                // 🟡 RECEPÇÃO
-                if (setorSelecionado === "RECEPÇÃO") {
-                    data.cell.styles.fillColor = [255, 248, 200];
-                }
+                        // 🔴 SÁBADO
+                        if (textoUpper.includes("SÁB") || textoUpper.includes("SAB")) {
+                            data.cell.styles.textColor = [200, 0, 0];
+                            data.cell.styles.fontStyle = 'bold';
+                            data.cell.styles.fontSize = 10;
+                        }
+                    }
         
-                // 🌸 SELAMENTO
-                if (setorSelecionado === "SELAMENTO") {
-                    data.cell.styles.fillColor = [255, 220, 235];
-                }
-            },
-            theme: 'grid'
-        });
+                    // 🔥 BORDAS
+                    data.cell.styles.lineWidth = 0.4;
+        
+                    // NÃO COLORIR COLUNA DATA
+                    if (col === 0) return;
+        
+                    // 🔵 BATISTÉRIO
+                    if (setorSelecionado === "BATISTÉRIO") {
+                        data.cell.styles.fillColor = [220, 235, 255];
+                    }
+        
+                    // 🟡 RECEPÇÃO
+                    if (setorSelecionado === "RECEPÇÃO") {
+                        data.cell.styles.fillColor = [255, 248, 200];
+                    }
+        
+                    // 🌸 SELAMENTO
+                    if (setorSelecionado === "SELAMENTO") {
+                        data.cell.styles.fillColor = [255, 220, 235];
+                    }
+                },
+        
+                theme: 'grid'
+            });
         
             doc.save(`relatorio_${setorSelecionado.toLowerCase()}.pdf`);
         };
-        
         // --- ACTIONS ---
 
         async function uploadFile(file) {
@@ -1546,28 +2034,44 @@
             if (res.status === "ok") { closeModal('modal-oficiante'); fetchData(); e.target.reset(); }
         };
 
+
         document.getElementById('form-escala').onsubmit = async (e) => {
             e.preventDefault();
+        
             const ofi = document.getElementById('escala-oficiante');
-            const idOrig = String(document.getElementById('escala-id-original').value || "").trim()
-            
+            const idOrig = String(document.getElementById('escala-id-original').value || "").trim();
+        
             const payload = {
                 action: idOrig ? "updateEscala" : "addEscala",
+        
                 data: document.getElementById('escala-data').value,
                 id_oficiante: ofi.value,
                 nome_oficiante: ofi.options[ofi.selectedIndex].text,
+        
                 setor: document.getElementById('escala-setor').value,
                 turno: document.getElementById('escala-turno').value,
+        
+                // 🔥 ESSENCIAIS PARA UPDATE
                 id_original: idOrig,
                 data_original: document.getElementById('escala-data-original').value,
                 turno_original: document.getElementById('escala-turno-original').value,
-                hora_inicial: document.getElementById('escala-hora-inicial').value,
-                hora_final: document.getElementById('escala-hora-final').value
+        
+                // 🔥 HORÁRIOS
+                hora_inicial: document.getElementById('escala-hora-inicial').value || "",
+                hora_final: document.getElementById('escala-hora-final').value || ""
             };
-            
+        
+            console.log("📤 ENVIANDO:", payload);
+        
             const res = await apiCall(payload);
-            if (res.status === "ok") { closeModal('modal-escala'); fetchData(); }
-        };
+        
+            if (res.status === "ok") {
+                closeModal('modal-escala');
+                fetchData(); // 🔥 atualiza calendário
+            } else {
+                alert(res.message || "Erro ao salvar");
+            }
+        };    
 
         window.deleteOficiante = async (id) => {
             if(confirm("Deseja realmente excluir este oficiante? Isso não removerá escalas passadas, mas impedirá novas.")) {
@@ -1611,38 +2115,63 @@
         };
 
         window.editEscalaItem = (item) => { 
-            // 1. Abre o modal e limpa estados anteriores
+            if (!item) {
+                alert("Erro: item não encontrado");
+                return;
+            }
+        
+            // 🔹 1. Abre modal
             openEscalaModal();
             document.getElementById('escala-modal-title').innerText = 'Editar Escala';
             
-            // 2. Grava os IDs originais (necessário para o seu escala.gs localizar a linha certa)
-            document.getElementById('escala-id-original').value = item.id_oficiante;
-            document.getElementById('escala-data-original').value = item.data.substring(0, 10);
-            document.getElementById('escala-turno-original').value = item.turno;
+            // 🔥 2. CHAVE ORIGINAL (ESSENCIAL PRO UPDATE)
+            document.getElementById('escala-id-original').value = item.id_oficiante || "";
+            document.getElementById('escala-data-original').value = (item.data || "").substring(0, 10);
+            document.getElementById('escala-turno-original').value = item.turno || "";
             
-            // 3. Preenche os campos básicos do formulário
-            document.getElementById('escala-oficiante').value = item.id_oficiante;
-            document.getElementById('escala-data').value = item.data.substring(0, 10);
-            document.getElementById('escala-setor').value = item.setor;
-            document.getElementById('escala-turno').value = item.turno;
+            // 🔹 3. PREENCHE FORMULÁRIO
+            document.getElementById('escala-oficiante').value = item.id_oficiante || "";
+            document.getElementById('escala-data').value = (item.data || "").substring(0, 10);
+            document.getElementById('escala-setor').value = item.setor || "";
+            document.getElementById('escala-turno').value = item.turno || "";
         
-            // 4. Lógica específica para o Container de Recepção
+            // 🔹 4. RECEPÇÃO (HORÁRIOS)
             const containerRecepcao = document.getElementById('container-horarios-recepcao');
             const selectHoraInicial = document.getElementById('escala-hora-inicial');
             const selectHoraFinal = document.getElementById('escala-hora-final');
+            const selectSetor = document.getElementById('escala-setor');
         
-            if (item.setor && item.setor.toUpperCase().includes('RECEPÇÃO')) {
-                // Mostra o campo azul se for recepção
+            function atualizarCamposRecepcao() {
+                const setorAtual = (selectSetor.value || "").toUpperCase();
+        
+                if (setorAtual === "RECEPÇÃO") {
+                    containerRecepcao.classList.remove('hidden');
+                } else {
+                    containerRecepcao.classList.add('hidden');
+                    selectHoraInicial.value = "";
+                    selectHoraFinal.value = "";
+                }
+            }
+        
+            // 🔥 5. DEFINE ESTADO INICIAL
+            if ((item.setor || "").toUpperCase() === "RECEPÇÃO") {
                 containerRecepcao.classList.remove('hidden');
-                // Preenche os selects com os valores que vieram da planilha
                 selectHoraInicial.value = item.hora_inicial || "";
                 selectHoraFinal.value = item.hora_final || "";
             } else {
-                // Esconde se for outro setor
                 containerRecepcao.classList.add('hidden');
                 selectHoraInicial.value = "";
                 selectHoraFinal.value = "";
             }
+        
+            // 🔥 6. EVENTO AO TROCAR SETOR
+            selectSetor.addEventListener('change', atualizarCamposRecepcao);
+        
+            console.log("🛠 EDITANDO:", {
+                id_oficiante: item.id_oficiante,
+                data_original: (item.data || "").substring(0, 10),
+                turno_original: item.turno
+            });
         };
 
         document.addEventListener("DOMContentLoaded", function(){
@@ -1660,51 +2189,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
